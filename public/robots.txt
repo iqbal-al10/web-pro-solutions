@@ -1,0 +1,10 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /login/
+Disallow: /preview/
+Disallow: /api/
+
+Sitemap: https://webprosolutions.com/sitemap.xml
+Host: https://webprosolutions.com

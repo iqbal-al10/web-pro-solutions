@@ -1,0 +1,92 @@
+{
+  "navbar": {
+    "catalog": "Catalog",
+    "pricing": "Pricing",
+    "testimonials": "Testimonials",
+    "faq": "FAQ",
+    "dashboard": "Dashboard"
+  },
+  "hero": {
+    "badge": "Global Excellence",
+    "subtitle": "Digital Agency • Website Development • IT Consulting",
+    "title1": "Build",
+    "title2": "Powerful",
+    "title3": "Websites.",
+    "description": "Create a more modern & premium digital ecosystem for Corporate, E-Commerce and Professional Agency.",
+    "catalogBtn": "Catalog",
+    "getStartedBtn": "Get Started"
+  },
+  "catalog": {
+    "badge": "Discover Our Work",
+    "title": "WEB PRO CATALOG",
+    "searchPlaceholder": "🔍 Search template by title or description...",
+    "filterBtn": "Filter",
+    "filterActive": "Active Filters:",
+    "resetFilter": "Reset All Filters",
+    "sortBy": "Sort By",
+    "all": "All",
+    "corporate": "Corporate",
+    "ecommerce": "E-Commerce",
+    "landingPage": "Landing Page",
+    "portfolio": "Portfolio",
+    "newest": "Newest",
+    "oldest": "Oldest",
+    "priceHigh": "Price High to Low",
+    "priceLow": "Price Low to High",
+    "alphaAz": "A → Z",
+    "alphaZa": "Z → A",
+    "category": "Category",
+    "search": "Search",
+    "reset": "Reset All Filters",
+    "catalogAvailable": "CATALOG AVAILABLE",
+    "filterResult": "Showing filtered results",
+    "emptyTitle": "No Template Found",
+    "emptyDesc": "Try changing your search keyword or filter selection.",
+    "emptyBtn": "Reset All Filters",
+    "price": "Price",
+    "preview": "Preview",
+    "order": "Order",
+    "noFeatures": "No features specified"
+  },
+  "priceCalculator": {
+    "badge": "Exclusive Configurator",
+    "title": "Build Your Best Website",
+    "architecture": "01. Main Architecture",
+    "standardFeatures": "All Packages Include Standard Features",
+    "show": "▼ Show",
+    "hide": "▲ Hide",
+    "standardList": "Standard Features (All Packages):",
+    "professional": "02. Professional Features",
+    "professionalDesc": "Add features according to your business needs",
+    "investment": "Investment Estimation",
+    "fullBuild": "Full Build",
+    "delivery": "Delivery: 3-14 Days",
+    "maintenance": "Maintenance Included",
+    "proAdded": "Pro Feature Added",
+    "proAddedPlural": "Pro Features Added",
+    "startProject": "Start Project Now"
+  },
+  "testimonials": {
+    "badge": "Success Stories",
+    "title": "Our Client Reviews"
+  },
+  "addTestimonial": {
+    "title": "Leave a Review",
+    "name": "Your Name",
+    "role": "Job Title / Company",
+    "rating5": "⭐⭐⭐⭐⭐ Excellent",
+    "rating4": "⭐⭐⭐⭐ Great",
+    "rating3": "⭐⭐⭐ Good",
+    "rating2": "⭐⭐ Fair",
+    "rating1": "⭐ Poor",
+    "comment": "Write your review...",
+    "submit": "Submit Review",
+    "submitting": "Submitting..."
+  },
+  "faq": {
+    "title": "Frequently Asked Questions"
+  },
+  "footer": {
+    "copyright": "© 2026 Crafted with Perfection • Mojokerto, Indonesia"
+  }
+}

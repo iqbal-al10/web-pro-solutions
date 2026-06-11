@@ -1,0 +1,92 @@
+{
+  "navbar": {
+    "catalog": "Catalog",
+    "pricing": "Pricing",
+    "testimonials": "Testimonials",
+    "faq": "FAQ",
+    "dashboard": "Dashboard"
+  },
+  "hero": {
+    "badge": "Global Excellence",
+    "subtitle": "Digital Agency • Website Development • IT Consulting",
+    "title1": "Build",
+    "title2": "Powerful",
+    "title3": "Websites.",
+    "description": "Ciptakan ekosistem yang lebih modern & digital premium untuk Corporate, E-Commerce dan Professional Agency.",
+    "catalogBtn": "Catalog",
+    "getStartedBtn": "Get Started"
+  },
+  "catalog": {
+    "badge": "Discover Our Work",
+    "title": "WEB PRO CATALOG",
+    "searchPlaceholder": "🔍 Cari template website berdasarkan judul atau deskripsi...",
+    "filterBtn": "Filter",
+    "filterActive": "Filter Aktif:",
+    "resetFilter": "Reset Semua Filter",
+    "sortBy": "Urutkan Berdasarkan",
+    "all": "All",
+    "corporate": "Corporate",
+    "ecommerce": "E-Commerce",
+    "landingPage": "Landing Page",
+    "portfolio": "Portfolio",
+    "newest": "Terbaru",
+    "oldest": "Terlama",
+    "priceHigh": "Harga Tertinggi",
+    "priceLow": "Harga Terendah",
+    "alphaAz": "A → Z",
+    "alphaZa": "Z → A",
+    "category": "Kategori",
+    "search": "Pencarian",
+    "reset": "Reset Semua Filter",
+    "catalogAvailable": "CATALOG TERSEDIA",
+    "filterResult": "Menampilkan hasil filter",
+    "emptyTitle": "Tidak Ada Template Ditemukan",
+    "emptyDesc": "Coba ubah kata kunci pencarian atau filter yang Anda pilih.",
+    "emptyBtn": "Reset Semua Filter",
+    "price": "Price",
+    "preview": "Preview",
+    "order": "Order",
+    "noFeatures": "No features specified"
+  },
+  "priceCalculator": {
+    "badge": "Exclusive Configurator",
+    "title": "Rancang Website Terbaik Anda",
+    "architecture": "01. Arsitektur Utama",
+    "standardFeatures": "Semua Paket Sudah Include Standard Features",
+    "show": "▼ Lihat",
+    "hide": "▲ Tutup",
+    "standardList": "Standard Features (Semua Paket):",
+    "professional": "02. Professional Features",
+    "professionalDesc": "Tambahkan fitur sesuai kebutuhan bisnis Anda",
+    "investment": "Investment Estimation",
+    "fullBuild": "Full Build",
+    "delivery": "Delivery: 3-14 Days",
+    "maintenance": "Maintenance Included",
+    "proAdded": "Pro Feature Added",
+    "proAddedPlural": "Pro Features Added",
+    "startProject": "Start Project Now"
+  },
+  "testimonials": {
+    "badge": "Success Stories",
+    "title": "Review Client Kami"
+  },
+  "addTestimonial": {
+    "title": "Beri Ulasan",
+    "name": "Nama Anda",
+    "role": "Pekerjaan / Perusahaan",
+    "rating5": "⭐⭐⭐⭐⭐ Excellent",
+    "rating4": "⭐⭐⭐⭐ Great",
+    "rating3": "⭐⭐⭐ Good",
+    "rating2": "⭐⭐ Fair",
+    "rating1": "⭐ Poor",
+    "comment": "Tulis ulasan Anda...",
+    "submit": "Kirim Ulasan",
+    "submitting": "Mengirim..."
+  },
+  "faq": {
+    "title": "Frequently Asked Questions"
+  },
+  "footer": {
+    "copyright": "© 2026 Crafted with Perfection • Mojokerto, Indonesia"
+  }
+}
