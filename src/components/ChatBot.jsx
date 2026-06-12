@@ -61,13 +61,13 @@ export default function ChatBot() {
     "Enterprise Security Features (+Rp 1.400k)",
   ];
 
-  // Harga yang benar (sinkron dengan PriceCalculator)
-  const correctPrices = {
+    // Harga yang benar (sinkron dengan PriceCalculator)
+    const correctPrices = {
     landing: 799000,
-    corporate: 2500000,
-    ecommerce: 5000000,
+    corporate: 1750000,
+    ecommerce: 3500000,
     portfolio: 1250000,
-  };
+    };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -143,32 +143,32 @@ export default function ChatBot() {
 
     // HARGA SEMUA PAKET
     if ((msg.includes("harga") || msg.includes("price")) && (msg.includes("paket") || msg.includes("semua") || msg.includes("list"))) {
-      resetUnansweredCounter();
-      return `💰 *Daftar Harga Paket Website:*\n\n• Premium Landing Page: Rp 799.000\n• Corporate Business: Rp 2.500.000\n• Advanced E-Commerce: Rp 5.000.000\n• Creative Portfolio: Rp 1.250.000\n\nKetik "harga landing page" untuk info lebih lengkap.`;
+    resetUnansweredCounter();
+    return `💰 *Daftar Harga Paket Website:*\n\n• Premium Landing Page: Rp 799.000\n• Corporate Business: Rp 1.750.000\n• Advanced E-Commerce: Rp 3.500.000\n• Creative Portfolio: Rp 1.250.000\n\nKetik "harga landing page" untuk info lebih lengkap.`;
     }
 
     // Harga Landing Page
     if ((msg.includes("landing") || msg.includes("landing page")) && (msg.includes("harga") || msg.includes("berapa"))) {
-      resetUnansweredCounter();
-      return `🚀 *Premium Landing Page*\n💰 Harga: Rp 799.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
+    resetUnansweredCounter();
+    return `🚀 *Premium Landing Page*\n💰 Harga: Rp 799.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
     }
 
     // Harga Corporate
     if ((msg.includes("corporate") || msg.includes("bisnis") || msg.includes("company")) && (msg.includes("harga") || msg.includes("berapa"))) {
-      resetUnansweredCounter();
-      return `🏢 *Corporate Business*\n💰 Harga: Rp 2.500.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Basic CMS Management\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
+    resetUnansweredCounter();
+    return `🏢 *Corporate Business*\n💰 Harga: Rp 1.750.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Basic CMS Management\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
     }
 
     // Harga E-Commerce
     if ((msg.includes("ecommerce") || msg.includes("e-commerce") || msg.includes("toko") || msg.includes("shop")) && (msg.includes("harga") || msg.includes("berapa"))) {
-      resetUnansweredCounter();
-      return `🛒 *Advanced E-Commerce*\n💰 Harga: Rp 5.000.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• CMS Management\n• Payment Gateway Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
+    resetUnansweredCounter();
+    return `🛒 *Advanced E-Commerce*\n💰 Harga: Rp 3.500.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• CMS Management\n• Payment Gateway Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
     }
 
     // Harga Portfolio
     if ((msg.includes("portfolio") || msg.includes("portofolio")) && (msg.includes("harga") || msg.includes("berapa"))) {
-      resetUnansweredCounter();
-      return `🎨 *Creative Portfolio*\n💰 Harga: Rp 1.250.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Basic CMS Management\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
+    resetUnansweredCounter();
+    return `🎨 *Creative Portfolio*\n💰 Harga: Rp 1.250.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Basic CMS Management\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
     }
 
     // CUSTOM WEBSITE

@@ -14,22 +14,22 @@ const STANDARD_FEATURES = [
 
 const webTypes = [
   { id: 'landing',   name: 'Premium Landing Page', price: 799000,  desc: 'Fokus konversi & penjualan tinggi.', icon: '🚀', category: 'Landing Page' },
-  { id: 'corporate', name: 'Corporate Business',   price: 2500000,  desc: 'Profil perusahaan profesional.',      icon: '🏢', category: 'Corporate'    },
-  { id: 'ecommerce', name: 'Advanced E-Commerce',  price: 5000000,  desc: 'Sistem belanja & payment gateway.',   icon: '🛒', category: 'E-Commerce'   },
-  { id: 'portfolio', name: 'Creative Portfolio',   price: 1250000,  desc: 'Showcase karya & personal branding.', icon: '🎨', category: 'Portfolio'    },
+  { id: 'corporate', name: 'Corporate Business',   price: 1750000, desc: 'Profil perusahaan profesional.',      icon: '🏢', category: 'Corporate'    },
+  { id: 'ecommerce', name: 'Advanced E-Commerce',  price: 3500000, desc: 'Sistem belanja & payment gateway.',   icon: '🛒', category: 'E-Commerce'   },
+  { id: 'portfolio', name: 'Creative Portfolio',   price: 1250000, desc: 'Showcase karya & personal branding.', icon: '🎨', category: 'Portfolio'    },
 ];
 
 const professionalFeatures = [
   { id: 1,  name: 'Secure Cloud Infrastructure',       price: 850000,  icon: '☁️'  },
-  { id: 2,  name: 'Advanced CMS & Content Management', price: 1200000, icon: '⚙️'  },
+  { id: 2,  name: 'Advanced CMS & Content Management', price: 1000000, icon: '⚙️'  },
   { id: 3,  name: 'Payment Gateway Integration',       price: 1500000, icon: '💳'  },
-  { id: 4,  name: 'WhatsApp API Integration',          price: 750000,  icon: '💬'  },
-  { id: 5,  name: 'Advanced Analytics Dashboard',      price: 950000,  icon: '📊'  },
-  { id: 6,  name: 'Role-Based Access Control',         price: 1100000, icon: '🔐'  },
-  { id: 7,  name: 'Advanced SEO Optimization',         price: 800000,  icon: '🔍'  },
-  { id: 8,  name: 'Automated Backup & Recovery',       price: 650000,  icon: '🔄'  },
-  { id: 9,  name: 'Third-Party API Integration',       price: 1300000, icon: '🔗'  },
-  { id: 10, name: 'Enterprise Security Features',      price: 1400000, icon: '🛡️'  },
+  { id: 4,  name: 'WhatsApp API Integration',          price: 1000000, icon: '💬'  },
+  { id: 5,  name: 'Advanced Analytics Dashboard',      price: 900000,  icon: '📊'  },
+  { id: 6,  name: 'Role-Based Access Control',         price: 850000,  icon: '🔐'  },
+  { id: 7,  name: 'Advanced SEO Optimization',         price: 700000,  icon: '🔍'  },
+  { id: 8,  name: 'Automated Backup & Recovery',       price: 550000,  icon: '🔄'  },
+  { id: 9,  name: 'Third-Party API Integration',       price: 1250000, icon: '🔗'  },
+  { id: 10, name: 'Enterprise Security Features',      price: 1300000, icon: '🛡️'  },
 ];
 
 export default function PriceCalculator({ t }) {
@@ -335,7 +335,7 @@ export default function PriceCalculator({ t }) {
                 <span className="text-slate-900">{selectedType.name}</span>
               </div>
               <div className="flex justify-between text-sm font-bold">
-                <span className="text-slate-600">	{t.priceCalculatorModal.addonsLabel}</span>
+                <span className="text-slate-600">{t.priceCalculatorModal.addonsLabel}</span>
                 <span className="text-slate-900">{selectedFeatures.length} fitur</span>
               </div>
               <div className="flex justify-between text-lg font-black pt-2 border-t border-slate-200">
