@@ -34,10 +34,11 @@ const NotFound = () => (
   </div>
 );
 
-// ========== TRACKING VISITOR ==========
+// ========== TRACKING VISITOR (HANYA 1 DATA PER SESSION) ==========
 function useVisitorTracking() {
   const location = useLocation();
   const [trackingEnabled, setTrackingEnabled] = useState(false);
+  const [hasRecordedSession, setHasRecordedSession] = useState(false);
   
   useEffect(() => {
     // Cek cookies consent
@@ -49,7 +50,6 @@ function useVisitorTracking() {
     
     checkConsent();
     
-    // Listen untuk perubahan consent
     window.addEventListener('cookiesAccepted', checkConsent);
     window.addEventListener('cookiesRejected', checkConsent);
     
@@ -60,19 +60,21 @@ function useVisitorTracking() {
   }, []);
   
   useEffect(() => {
-    const trackPageView = async () => {
+    const recordSession = async () => {
       // Jangan track jika tidak ada consent
       if (!trackingEnabled) return;
       
-      // Jangan track di halaman admin dan preview
-      if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/preview') || location.pathname === '/login') {
+      // Jangan track di halaman admin, preview, login, legal
+      if (location.pathname.startsWith('/admin') || 
+          location.pathname.startsWith('/preview') || 
+          location.pathname === '/login' ||
+          location.pathname === '/privacy-policy' ||
+          location.pathname === '/terms') {
         return;
       }
       
-      // Jangan track di halaman legal
-      if (location.pathname === '/privacy-policy' || location.pathname === '/terms') {
-        return;
-      }
+      // CEK: Apakah sudah merekam session untuk session_id ini?
+      if (hasRecordedSession) return;
       
       try {
         // Ambil atau buat session_id
@@ -81,95 +83,105 @@ function useVisitorTracking() {
         const now = Date.now();
         const SESSION_TIMEOUT = 60 * 60 * 1000; // 60 menit
         
+        let isNewSession = false;
+        
         if (!sessionId || !lastActive || (now - parseInt(lastActive)) > SESSION_TIMEOUT) {
+          // Session baru
           sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
-          localStorage.setItem('visitor_session_id', sessionId);
+          isNewSession = true;
         }
         
         // Update last active
+        localStorage.setItem('visitor_session_id', sessionId);
         localStorage.setItem('visitor_last_active', now.toString());
         
-        // Dapatkan sumber traffic
-        let source = 'direct';
-        const urlParams = new URLSearchParams(window.location.search);
-        const utmSource = urlParams.get('utm_source');
-        const referrer = document.referrer;
-        
-        // Cek apakah ini kunjungan pertama dalam session
+        // CEK: Apakah session ini sudah pernah tercatat di database?
         const { data: existingData } = await supabase
           .from('visitors')
           .select('id')
           .eq('session_id', sessionId)
           .limit(1);
-          
-        let finalSource = source;
-        let referrerValue = null;
         
-        if (existingData && existingData.length === 0) {
-          if (utmSource) {
-            finalSource = utmSource;
-          } else if (referrer && referrer !== '') {
-            if (referrer.includes('google')) finalSource = 'google';
-            else if (referrer.includes('facebook') || referrer.includes('instagram') || 
-                     referrer.includes('twitter') || referrer.includes('tiktok') ||
-                     referrer.includes('youtube')) finalSource = 'social';
-            else finalSource = 'referral';
-            referrerValue = referrer;
-          }
+        // HANYA rekam jika session BELUM pernah tercatat di database
+        if (existingData && existingData.length > 0) {
+          // Session sudah pernah tercatat, jangan rekam lagi
+          setHasRecordedSession(true);
+          return;
         }
         
-        // Parse User Agent
-        const userAgent = navigator.userAgent;
-        const parser = new UAParser();
-        parser.setUA(userAgent);
-        const result = parser.getResult();
-        
-        // Deteksi perangkat
-        let device = 'desktop';
-        if (/(mobile|iphone|android)/i.test(userAgent)) device = 'mobile';
-        else if (/(tablet|ipad)/i.test(userAgent)) device = 'tablet';
-        
-        // Detail perangkat
-        const deviceBrand = result.device.vendor || 'Unknown';
-        const deviceModel = result.device.model || 'Unknown';
-        const browserName = result.browser.name || 'Unknown';
-        const osName = result.os.name || 'Unknown';
-        const osVersion = result.os.version || 'Unknown';
-        
-        // Simpan ke Supabase
-        await supabase.from('visitors').insert({
-          session_id: sessionId,
-          page: location.pathname || '/',
-          source: finalSource,
-          device: device,
-          device_brand: deviceBrand,
-          device_model: deviceModel,
-          browser_name: browserName,
-          os_name: osName,
-          os_version: osVersion,
-          referrer: referrerValue,
-          visited_at: new Date().toISOString()
-        });
+        // Jika session baru, rekam ke database
+        if (isNewSession || existingData.length === 0) {
+          // Dapatkan sumber traffic (hanya untuk session baru)
+          let source = 'direct';
+          const urlParams = new URLSearchParams(window.location.search);
+          const utmSource = urlParams.get('utm_source');
+          const referrer = document.referrer;
+          
+          if (utmSource) {
+            source = utmSource;
+          } else if (referrer && referrer !== '') {
+            if (referrer.includes('google')) source = 'google';
+            else if (referrer.includes('facebook') || referrer.includes('instagram') || 
+                     referrer.includes('twitter') || referrer.includes('tiktok') ||
+                     referrer.includes('youtube')) source = 'social';
+            else source = 'referral';
+          }
+          
+          // Parse User Agent
+          const userAgent = navigator.userAgent;
+          const parser = new UAParser();
+          parser.setUA(userAgent);
+          const result = parser.getResult();
+          
+          // Deteksi perangkat
+          let device = 'desktop';
+          if (/(mobile|iphone|android)/i.test(userAgent)) device = 'mobile';
+          else if (/(tablet|ipad)/i.test(userAgent)) device = 'tablet';
+          
+          // Detail perangkat
+          const deviceBrand = result.device.vendor || 'Unknown';
+          const deviceModel = result.device.model || 'Unknown';
+          const browserName = result.browser.name || 'Unknown';
+          const osName = result.os.name || 'Unknown';
+          const osVersion = result.os.version || 'Unknown';
+          
+          // Simpan ke Supabase (HANYA SEKALI per session)
+          await supabase.from('visitors').insert({
+            session_id: sessionId,
+            page: location.pathname || '/',
+            source: source,
+            device: device,
+            device_brand: deviceBrand,
+            device_model: deviceModel,
+            browser_name: browserName,
+            os_name: osName,
+            os_version: osVersion,
+            referrer: referrer || null,
+            visited_at: new Date().toISOString()
+          });
+          
+          setHasRecordedSession(true);
+          console.log('Session recorded:', sessionId);
+        }
         
       } catch (err) {
         console.error('Visitor tracking error:', err);
       }
     };
     
-    // Delay sedikit agar tidak mengganggu loading halaman
+    // Jalankan record session setelah halaman stabil
     const timer = setTimeout(() => {
-      trackPageView();
+      recordSession();
     }, 500);
     
     return () => clearTimeout(timer);
-  }, [location, trackingEnabled]);
+  }, [location, trackingEnabled, hasRecordedSession]);
 }
 
 function AppContent() {
   const location = useLocation();
   const isPreviewPage = location.pathname.startsWith('/preview/');
   
-  // Aktifkan tracking visitor
   useVisitorTracking();
 
   return (

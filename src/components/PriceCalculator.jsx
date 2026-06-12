@@ -13,10 +13,10 @@ const STANDARD_FEATURES = [
 ];
 
 const webTypes = [
-  { id: 'landing',   name: 'Premium Landing Page', price: 750000,  desc: 'Fokus konversi & penjualan tinggi.', icon: '🚀', category: 'Landing Page' },
+  { id: 'landing',   name: 'Premium Landing Page', price: 1000000,  desc: 'Fokus konversi & penjualan tinggi.', icon: '🚀', category: 'Landing Page' },
   { id: 'corporate', name: 'Corporate Business',   price: 2500000,  desc: 'Profil perusahaan profesional.',      icon: '🏢', category: 'Corporate'    },
   { id: 'ecommerce', name: 'Advanced E-Commerce',  price: 5000000,  desc: 'Sistem belanja & payment gateway.',   icon: '🛒', category: 'E-Commerce'   },
-  { id: 'portfolio', name: 'Creative Portfolio',   price: 1000000,  desc: 'Showcase karya & personal branding.', icon: '🎨', category: 'Portfolio'    },
+  { id: 'portfolio', name: 'Creative Portfolio',   price: 1500000,  desc: 'Showcase karya & personal branding.', icon: '🎨', category: 'Portfolio'    },
 ];
 
 const professionalFeatures = [

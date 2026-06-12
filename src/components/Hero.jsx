@@ -134,12 +134,20 @@ const Hero = ({ t }) => {
             </motion.p>
 
             <div className="flex flex-wrap gap-5">
-              <button 
-                className="bg-blue-900 text-white px-12 py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.3em] shadow-lg hover:bg-slate-950 transition-all active:scale-95"
-                aria-label="Lihat katalog portfolio"
-              >
-                {t.hero.catalogBtn}
-              </button>
+            <button 
+              onClick={() => {
+                const catalogSection = document.getElementById('catalog');
+                if (catalogSection) {
+                  const yOffset = -70;
+                  const y = catalogSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                  window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+              }}
+              className="bg-blue-900 text-white px-12 py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.3em] shadow-lg hover:bg-slate-950 transition-all active:scale-95"
+              aria-label="Lihat katalog portfolio"
+            >
+              {t.hero.catalogBtn}
+            </button>
               <a 
                 href="https://wa.me/6285710379820?text=Halo%20Web%20pro%20Solutions" 
                 target="_blank" 

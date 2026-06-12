@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import qrisImage from "../assets/QR.jpeg"; // Pastikan path sesuai dengan lokasi file QR.jpeg Anda
+import qrisImage from "../assets/QR.jpeg";
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -53,6 +53,14 @@ export default function ChatBot() {
     "Enterprise Security Features (+Rp 1.400k)",
   ];
 
+  // Harga yang benar (sinkron dengan PriceCalculator)
+  const correctPrices = {
+    landing: 1000000,
+    corporate: 2500000,
+    ecommerce: 5000000,
+    portfolio: 1500000,
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -74,18 +82,19 @@ export default function ChatBot() {
     return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
   };
 
-  // Cek apakah pesan adalah sapaan (HANYA sapaan singkat, di Paling Bawah Prioritas)
+  // Fungsi untuk menghitung loading time berdasarkan panjang teks
+  const getTypingDelay = (text) => {
+    const wordCount = text.split(/\s+/).length;
+    if (wordCount < 50) return 3000; // 3 detik untuk jawaban pendek
+    return 5000; // 5 detik untuk jawaban panjang
+  };
+
+  // Cek apakah pesan adalah sapaan
   const isGreeting = (msg) => {
     const greetings = ["hai", "halo", "hello", "hi", "hey", "oi", "mamen", "cuy", "bro", "bang", "mas", "kak", "mbak", "teh", "p", "pe", "selamat pagi", "selamat siang", "selamat malam"];
     const msgLower = msg.toLowerCase().trim();
-    
-    // Jika pesan panjang (> 30 karakter), BUKAN sapaan
     if (msgLower.length > 30) return false;
-    
-    // Cek apakah pesan sama persis dengan salah satu sapaan
     if (greetings.includes(msgLower)) return true;
-    
-    // Cek apakah pesan dimulai dengan sapaan (contoh: "halo admin")
     for (const g of greetings) {
       if (msgLower.startsWith(g + " ") || msgLower.startsWith(g)) {
         return true;
@@ -99,47 +108,53 @@ export default function ChatBot() {
     setUnansweredCount(0);
   };
 
-  // Keyword responses - URUTAN PENTING: Spesifik di atas, umum di bawah
+  // Keyword responses dengan harga yang benar
   const getBotResponse = (userMessage) => {
     const msg = userMessage.toLowerCase().trim();
 
-    // ========== 1. PROSES PENGERJAAN ==========
+    // PROSES PENGERJAAN
     if (msg.includes("proses") || msg.includes("berapa lama") || msg.includes("estimasi") || msg.includes("waktu") || msg.includes("pengerjaan") || msg.includes("durasi") || msg.includes("lama") || msg.includes("hari")) {
       resetUnansweredCounter();
       return `⏱️ *Proses Pengerjaan Website:*\n\n1️⃣ Konsultasi & Analisis Kebutuhan (1-2 hari)\n2️⃣ Desain UI/UX (2-3 hari)\n3️⃣ Development & Coding (3-7 hari)\n4️⃣ Revisi & Penyesuaian (sesuai kebutuhan)\n5️⃣ Testing & Quality Control (1-2 hari)\n6️⃣ Launching & Deployment (1 hari)\n\n📌 *Total estimasi: 7-21 hari kerja*\n(Tergantung kompleksitas website dan ketersediaan konten dari klien)\n\n💡 Proses lebih cepat jika data sudah lengkap!`;
     }
 
-    // ========== 2. HARGA ==========
+    // HARGA SEMUA PAKET
     if ((msg.includes("harga") || msg.includes("price")) && (msg.includes("paket") || msg.includes("semua") || msg.includes("list"))) {
       resetUnansweredCounter();
-      return `💰 *Daftar Harga Paket Website:*\n\n• Premium Landing Page: Rp 1.500.000\n• Corporate Business: Rp 3.500.000\n• Advanced E-Commerce: Rp 6.500.000\n• Creative Portfolio: Rp 2.000.000\n\nKetik "harga landing page" untuk info lebih lengkap.`;
+      return `💰 *Daftar Harga Paket Website:*\n\n• Premium Landing Page: Rp 750.000\n• Corporate Business: Rp 2.500.000\n• Advanced E-Commerce: Rp 5.000.000\n• Creative Portfolio: Rp 1.000.000\n\nKetik "harga landing page" untuk info lebih lengkap.`;
     }
 
     // Harga Landing Page
     if ((msg.includes("landing") || msg.includes("landing page")) && (msg.includes("harga") || msg.includes("berapa"))) {
       resetUnansweredCounter();
-      return `🚀 *Premium Landing Page*\n💰 Harga: Rp 1.500.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on):\n${professionalFeatures.slice(0, 5).map(f => `• ${f}`).join('\n')}\n\nTanyakan "proses" untuk info pengerjaan.`;
+      return `🚀 *Premium Landing Page*\n💰 Harga: Rp 750.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
     }
 
     // Harga Corporate
     if ((msg.includes("corporate") || msg.includes("bisnis") || msg.includes("company")) && (msg.includes("harga") || msg.includes("berapa"))) {
       resetUnansweredCounter();
-      return `🏢 *Corporate Business*\n💰 Harga: Rp 3.500.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Basic CMS Management\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on):\n${professionalFeatures.slice(0, 5).map(f => `• ${f}`).join('\n')}\n\nTanyakan "proses" untuk info pengerjaan.`;
+      return `🏢 *Corporate Business*\n💰 Harga: Rp 2.500.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Basic CMS Management\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
     }
 
     // Harga E-Commerce
     if ((msg.includes("ecommerce") || msg.includes("e-commerce") || msg.includes("toko") || msg.includes("shop")) && (msg.includes("harga") || msg.includes("berapa"))) {
       resetUnansweredCounter();
-      return `🛒 *Advanced E-Commerce*\n💰 Harga: Rp 6.500.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• CMS Management\n• Payment Gateway Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on):\n${professionalFeatures.map(f => `• ${f}`).join('\n')}\n\nTanyakan "proses" untuk info pengerjaan.`;
+      return `🛒 *Advanced E-Commerce*\n💰 Harga: Rp 5.000.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• CMS Management\n• Payment Gateway Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
     }
 
     // Harga Portfolio
     if ((msg.includes("portfolio") || msg.includes("portofolio")) && (msg.includes("harga") || msg.includes("berapa"))) {
       resetUnansweredCounter();
-      return `🎨 *Creative Portfolio*\n💰 Harga: Rp 2.000.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Basic CMS Management\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on):\n${professionalFeatures.slice(0, 5).map(f => `• ${f}`).join('\n')}\n\nTanyakan "proses" untuk info pengerjaan.`;
+      return `🎨 *Creative Portfolio*\n💰 Harga: Rp 1.000.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Basic CMS Management\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
     }
 
-    // ========== 3. FITUR LENGKAP ==========
+    // CUSTOM WEBSITE
+    if (msg.includes("custom") || msg.includes("kustom") || msg.includes("buat sendiri") || msg.includes("request sendiri") || (msg.includes("bisa") && msg.includes("sendiri"))) {
+      resetUnansweredCounter();
+      return `🎨 *Custom Website Development*\n\nTentu bisa! Kami menerima request custom website sesuai kebutuhan spesifik Anda.\n\n✅ *Yang bisa kami custom:*\n• Desain UI/UX unik (tidak pakai template)\n• Fitur khusus sesuai request\n• Integrasi API tertentu\n• Sistem yang kompleks\n• Database custom\n\n💡 *Cara order custom:*\n1. Konsultasikan kebutuhan Anda\n2. Kami akan berikan penawaran harga\n3. Proses development dimulai\n\n📱 *Untuk konsultasi custom website, langsung hubungi tim kami via WhatsApp:*\n[wa.me/6285710379820](wa.me/6285710379820)`;
+    }
+
+    // FITUR LENGKAP
     if (msg.includes("fitur") || msg.includes("fitur yang tersedia") || msg.includes("apa saja fitur") || (msg.includes("fitur") && msg.includes("tersedia"))) {
       resetUnansweredCounter();
       let response = `✅ *Fitur Yang Tersedia:*\n\n`;
@@ -159,25 +174,19 @@ export default function ChatBot() {
       return response;
     }
 
-    // ========== 4. CUSTOM WEBSITE ==========
-    if (msg.includes("custom") || msg.includes("kustom") || msg.includes("buat sendiri") || msg.includes("request sendiri") || (msg.includes("bisa") && msg.includes("sendiri"))) {
-      resetUnansweredCounter();
-      return `🎨 *Custom Website Development*\n\nTentu bisa! Kami menerima request custom website sesuai kebutuhan spesifik Anda.\n\n✅ *Yang bisa kami custom:*\n• Desain UI/UX unik (tidak pakai template)\n• Fitur khusus sesuai request\n• Integrasi API tertentu\n• Sistem yang kompleks\n• Database custom\n\n💡 *Cara order custom:*\n1. Konsultasikan kebutuhan Anda\n2. Kami akan berikan penawaran harga\n3. Proses development dimulai\n\n📱 *Untuk konsultasi custom website, langsung hubungi tim kami via WhatsApp:*\n[wa.me/6285710379820](wa.me/6285710379820)`;
-    }
-
-    // ========== 5. DOMAIN & HOSTING ==========
+    // DOMAIN & HOSTING
     if (msg.includes("domain") || msg.includes("hosting") || msg.includes("url")) {
       resetUnansweredCounter();
       return `🌐 *Domain & Hosting:*\n\n✅ *Termasuk dalam paket:*\n• Domain .com / .id / .net (1 tahun pertama)\n• Hosting gratis (1 tahun pertama)\n• SSL Certificate (keamanan website)\n• Email professional (nama@domainanda.com)\n• Bandwidth unlimited\n\n💡 Anda juga bisa menggunakan domain sendiri jika sudah punya.`;
     }
 
-    // ========== 6. REVISI ==========
+    // REVISI
     if (msg.includes("revisi") || msg.includes("ubah") || msg.includes("perubahan")) {
       resetUnansweredCounter();
       return `✏️ *Jaminan Revisi:*\n\nKami menjamin kepuasan klien dengan revisi sampai website benar-benar siap sesuai kesepakatan awal. Tidak ada biaya tambahan untuk revisi dalam lingkup yang disepakati.\n\n📌 *Revisi maksimal 3x* untuk perubahan besar, sisanya gratis untuk perubahan kecil.`;
     }
 
-    // ========== 7. PEMBAYARAN ==========
+    // PEMBAYARAN
     if (msg.includes("bayar") || msg.includes("dp") || msg.includes("transfer") || msg.includes("pembayaran") || msg.includes("cara bayar") || msg.includes("metode") || msg.includes("qris") || msg.includes("scan")) {
       resetUnansweredCounter();
       setTimeout(() => {
@@ -194,13 +203,13 @@ export default function ChatBot() {
       return `💰 *Sistem Pembayaran:*\n\n📌 *Cicilan 2x:*\n• DP 50% di awal pengerjaan\n• Pelunasan 50% setelah website selesai\n\n📌 *Metode Pembayaran:*\n• Transfer Bank (BCA, Mandiri, BRI, BNI)\n• QRIS (Scan QR Code via OVO, Gopay, DANA, LinkAja)\n\n💳 *QRIS akan muncul di pesan berikutnya.*`;
     }
 
-    // ========== 8. ADMIN / KONTAK ==========
+    // ADMIN / KONTAK
     if (msg.includes("admin") || msg.includes("kontak") || msg.includes("wa") || msg.includes("whatsapp") || msg.includes("telepon") || msg.includes("hubungi") || msg.includes("no")) {
       resetUnansweredCounter();
       return `📱 *Hubungi Admin:*\n\nWhatsApp: 0857-1037-9820\n\nKlik link ini untuk chat langsung:\n[wa.me/6285710379820](wa.me/6285710379820)\n\nTim admin siap membantu 24/7! 🚀`;
     }
 
-    // ========== 9. TENTANG BOT (siapa nama anda, apa tugas anda, apa yang harus saya lakukan) ==========
+    // TENTANG BOT
     if (msg.includes("siapa nama") || msg.includes("nama anda") || msg.includes("kamu siapa") || msg.includes("siapa anda") || 
         msg.includes("apa tugas") || msg.includes("tugas anda") || msg.includes("fungsi kamu") || msg.includes("bisa apa") ||
         msg.includes("apa yang harus saya lakukan") || msg.includes("yang harus saya lakukan")) {
@@ -208,33 +217,37 @@ export default function ChatBot() {
       return `🤖 *Tentang Saya:*\n\nNama saya *Web Pro Assistant*, asisten virtual dari Web Pro Solutions.\n\n📋 *Tugas saya:*\n• Memberi informasi harga paket website\n• Menjelaskan proses pengerjaan\n• Menampilkan fitur yang tersedia\n• Menjawab pertanyaan tentang domain, hosting, pembayaran\n• Membantu Anda terhubung dengan tim admin\n\n💡 *Yang harus Anda lakukan:*\nCukup ketik pertanyaan Anda, atau klik tombol di bawah ini:\n• "Harga paket website berapa?"\n• "Proses pengerjaan berapa lama?"\n• "Apa saja fitur yang tersedia?"\n• "Bisa custom website sendiri?"\n\nSaya siap membantu! 🚀`;
     }
 
-    // ========== 10. TENTANG PEMBUAT (siapa bos/ceo/owner/developer, siapa yang buat anda) ==========
-    if (msg.includes("siapa bos") || msg.includes("siapa juragan") || msg.includes("siapa ceo") || msg.includes("siapa owner") || 
-        msg.includes("siapa developer") || msg.includes("siapa yang buat") || msg.includes("pembuat anda") || msg.includes("creator anda") ||
-        msg.includes("bos") || msg.includes("juragan") || msg.includes("ceo") || msg.includes("owner") || msg.includes("developer")) {
+    // TENTANG PEMBUAT (diperbaiki)
+    if (msg.includes("siapa yang buat") || msg.includes("pembuat anda") || msg.includes("creator anda") || msg.includes("dibuat oleh siapa")) {
       resetUnansweredCounter();
-      return `👨‍💼 *Tentang Bos/Owner:*\n\nWeb Pro Solutions didirikan dan dikelola oleh bos Iqbal Al, seorang web developer dan digital entrepreneur berpengalaman.\n\n👨‍💻 *Tentang Pembuat Saya:*\n\nSaya dibuat oleh tim Web Pro Solutions, tepatnya oleh bos Iqbal Al sebagai full-stack developer, untuk membantu calon klien mendapatkan informasi dengan cepat dan mudah.\n\n🌐 *Portofolio & Kontak:*\n• Instagram: @iqbal_alh\n• GitHub: @iqbal-al10\n• WhatsApp: 0857-1037-9820\n\nAda yang bisa saya bantu hari ini? 😊`;
+      return `👨‍💻 *Tentang Pembuat Saya:*\n\nSaya dibuat oleh tim Web Pro Solutions, tepatnya oleh the one and only mas Iqbal Al sebagai full-stack developer, untuk membantu calon klien mendapatkan informasi dengan cepat dan mudah.\n\n🌐 *Portofolio & Kontak:*\n• Instagram: @iqbal_alh\n• GitHub: @iqbal-al10\n• WhatsApp: 0857-1037-9820\n\nAda yang bisa saya bantu hari ini? 😊`;
     }
 
-    // ========== 11. MENU ==========
+    // TENTANG BOS (tetap)
+    if (msg.includes("siapa bos") || msg.includes("siapa juragan") || msg.includes("siapa ceo") || msg.includes("siapa owner") || 
+        msg.includes("siapa developer") || msg.includes("bos") || msg.includes("juragan") || msg.includes("ceo") || msg.includes("owner")) {
+      resetUnansweredCounter();
+      return `👨‍💼 *Tentang Bos/Owner:*\n\nWeb Pro Solutions didirikan dan dikelola oleh mas Iqbal Al, seorang web developer dan digital entrepreneur berpengalaman.\n\nAda yang bisa saya bantu hari ini? 😊`;
+    }
+
+    // MENU
     if (msg.includes("menu") || msg.includes("bantuan") || msg.includes("help")) {
       resetUnansweredCounter();
       return `📋 *Yang bisa saya bantu:*\n\n• Harga paket website\n• Detail paket (Landing Page, Corporate, E-Commerce, Portfolio)\n• Proses pengerjaan\n• Fitur yang tersedia (Standard & Professional)\n• Custom website\n• Info domain & hosting\n• Sistem pembayaran (Transfer Bank & QRIS)\n• Admin\n\nKlik tombol di bawah atau ketik pertanyaan Anda.`;
     }
 
-    // ========== 12. TERIMA KASIH ==========
+    // TERIMA KASIH
     if (msg.includes("terima kasih") || msg.includes("makasih") || msg.includes("thanks") || msg.includes("thank")) {
       resetUnansweredCounter();
       return `Sama-sama! 😊 Senang bisa membantu.\n\nJika ada pertanyaan lain, tanyakan saja ya! Klik tombol di bawah untuk pertanyaan cepat.\n\nJangan lupa follow Instagram kami @iqbal_alh untuk melihat portofolio terbaru!`;
     }
 
-    // ========== 13. SAPAAN ==========
+    // SAPAAN
     if (isGreeting(msg)) {
       resetUnansweredCounter();
       return `Halo juga! 👋 Senang berkenalan dengan Anda.\n\nAda yang bisa saya bantu hari ini? Coba tanyakan:\n• "proses pengerjaan"\n• "harga landing page"\n• "fitur website"\n• "custom website"\n\nAtau klik tombol di bawah untuk pertanyaan cepat.`;
     }
 
-    // ========== 14. TIDAK BISA DIJAWAB ==========
     return null;
   };
 
@@ -242,6 +255,7 @@ export default function ChatBot() {
     const messageText = text || inputMessage;
     if (!messageText.trim()) return;
 
+    // Tambah pesan user
     const userMessage = {
       id: Date.now(),
       text: messageText,
@@ -252,23 +266,30 @@ export default function ChatBot() {
     setInputMessage("");
     setIsTyping(true);
 
+    // Simulasi delay typing berdasarkan panjang respons
     setTimeout(() => {
       let response = getBotResponse(userMessage.text);
       
+      // Format link WhatsApp
       if (response && response.includes("wa.me/6285710379820") && !response.includes("[wa.me")) {
         response = response.replace(/wa\.me\/6285710379820/g, '[wa.me/6285710379820](wa.me/6285710379820)');
       }
 
       let botMessage;
       if (response) {
-        botMessage = {
-          id: Date.now() + 1,
-          text: response,
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, botMessage]);
-        setIsTyping(false);
+        // Hitung delay typing berdasarkan panjang respons
+        const typingDelay = getTypingDelay(response);
+        
+        setTimeout(() => {
+          botMessage = {
+            id: Date.now() + 1,
+            text: response,
+            sender: "bot",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, botMessage]);
+          setIsTyping(false);
+        }, typingDelay);
       } else {
         const newUnansweredCount = unansweredCount + 1;
         setUnansweredCount(newUnansweredCount);
@@ -294,10 +315,14 @@ export default function ChatBot() {
             waLink: waLink,
           };
         }
-        setMessages((prev) => [...prev, fallbackMessage]);
-        setIsTyping(false);
+        
+        const shortDelay = getTypingDelay(fallbackMessage.text);
+        setTimeout(() => {
+          setMessages((prev) => [...prev, fallbackMessage]);
+          setIsTyping(false);
+        }, shortDelay);
       }
-    }, 800);
+    }, 100);
   };
 
   const handleKeyPress = (e) => {
