@@ -154,10 +154,9 @@ export default function PortfolioCard({ project, t }) {
           <div className="absolute inset-0 bg-blue-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10" />
           <img 
             src={project.thumbnail_url}
-            srcSet={`${project.thumbnail_url}?width=400 400w, ${project.thumbnail_url}?width=800 800w`}
-            sizes="(max-width: 768px) 400px, 800px"
             loading="lazy"
             alt={project.title}
+            className="w-full h-full object-cover transition-transform duration-1000 ease-in-out transform group-hover:scale-110"
           />
           <div className="absolute top-4 right-4 z-20">
             <span className="px-4 py-2 rounded-xl bg-white/80 backdrop-blur-md text-[8px] border border-slate-200 font-black text-blue-900 uppercase tracking-[0.2em] shadow-md">
@@ -239,13 +238,13 @@ export default function PortfolioCard({ project, t }) {
             className="relative bg-white rounded-[2.5rem] max-w-md w-full p-8 shadow-2xl border border-slate-100"
           >
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Pesan Template</h3>
+              <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{t.orderModal.title}</h3>
               <p className="text-slate-500 text-sm mt-1">{project.title}</p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-2">Nama Lengkap</label>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-2">{t.orderModal.nameLabel}</label>
                 <input
                   type="text"
                   value={orderForm.name}
@@ -256,7 +255,7 @@ export default function PortfolioCard({ project, t }) {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-2">Nomor WhatsApp</label>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-2">{t.orderModal.phoneLabel}</label>
                 <input
                   type="tel"
                   value={orderForm.phone}
@@ -267,7 +266,7 @@ export default function PortfolioCard({ project, t }) {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-2">Catatan / Requirement Tambahan</label>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-2">{t.orderModal.notesLabel}</label>
                 <textarea
                   value={orderForm.notes}
                   onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })}
@@ -280,7 +279,7 @@ export default function PortfolioCard({ project, t }) {
 
             <div className="mt-6 p-4 bg-slate-50 rounded-2xl">
               <div className="flex justify-between text-sm font-bold">
-                <span className="text-slate-600">Total Investasi:</span>
+                <span className="text-slate-600">{t.orderModal.totalLabel}</span>
                 <span className="text-blue-900 text-lg">Rp {project.base_price?.toLocaleString()}</span>
               </div>
             </div>
@@ -291,7 +290,7 @@ export default function PortfolioCard({ project, t }) {
                 className="flex-1 py-4 rounded-2xl font-black text-[11px] uppercase tracking-wider border-2 border-slate-200 text-slate-500 hover:bg-slate-100 transition-all"
                 aria-label="Batal pesan"
               >
-                Batal
+                {t.orderModal.cancelBtn}
               </button>
               <button
                 onClick={handleSubmitOrder}
@@ -299,7 +298,7 @@ export default function PortfolioCard({ project, t }) {
                 className="flex-1 py-4 bg-blue-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-wider hover:bg-slate-900 transition-all disabled:opacity-50"
                 aria-label="Kirim pesanan"
               >
-                {isSubmitting ? "Mengirim..." : "Kirim Pesanan"}
+                {isSubmitting ? t.orderModal.submitting : t.orderModal.submitBtn}
               </button>
             </div>
           </motion.div>

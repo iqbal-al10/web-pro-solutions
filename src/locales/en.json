@@ -66,6 +66,15 @@
     "proAddedPlural": "Pro Features Added",
     "startProject": "Start Project Now"
   },
+  "priceCalculatorModal": {
+    "title": "Order Confirmation",
+    "packageLabel": "Package:",
+    "addonsLabel": "Professional Add-ons:",
+    "totalLabel": "Total:",
+    "cancelBtn": "Cancel",
+    "submitBtn": "Submit Order",
+    "submitting": "Processing..."
+  },
   "testimonials": {
     "badge": "Success Stories",
     "title": "Our Client Reviews"
@@ -84,7 +93,36 @@
     "submitting": "Submitting..."
   },
   "faq": {
-    "title": "Frequently Asked Questions"
+    "title": "Frequently Asked Questions",
+    "items": [
+      { "q": "How long does website development take?", "a": "For Landing Page, it takes about 2-3 days after we receive complete data." },
+      { "q": "Is Hosting and Domain included in the package?", "a": "Yes, our packages include setup for hosting and domain (.com/.id) for the first year." },
+      { "q": "What if I don't have content/text?", "a": "Don't worry, our team will help create persuasive copywriting based on your business profile." },
+      { "q": "Can the website be opened smoothly on mobile?", "a": "Of course. All websites we build are Responsive, meaning the display automatically adjusts to any device." },
+      { "q": "Can you help manage the website after launch?", "a": "Yes. We provide monthly maintenance services if you need help updating content or performance monitoring." },
+      { "q": "Can I request revisions?", "a": "Yes, we guarantee client satisfaction with revisions until the website is ready as agreed." },
+      { "q": "What is the payment system?", "a": "Payment is 50% DP upfront, and 50% after the website is completed and ready for publication." },
+      { "q": "Is there a warranty after the website is completed?", "a": "Yes, we provide a 3-month warranty for bug fixes and minor maintenance after the website goes live." }
+    ]
+  },
+  "orderModal": {
+    "title": "Order Template",
+    "nameLabel": "Full Name",
+    "namePlaceholder": "Enter your name",
+    "phoneLabel": "WhatsApp Number",
+    "phonePlaceholder": "Example: 08123456789",
+    "notesLabel": "Notes / Additional Requirements",
+    "notesPlaceholder": "Example: Need custom API integration, special design request, etc.",
+    "totalLabel": "Total Investment:",
+    "cancelBtn": "Cancel",
+    "submitBtn": "Submit Order",
+    "submitting": "Submitting...",
+    "successTitle": "Success!",
+    "successMessage": "✅ Your request has been sent! Our team will contact you shortly.",
+    "errorTitle": "Attention",
+    "errorEmptyName": "Name cannot be empty!",
+    "errorEmptyPhone": "WhatsApp number cannot be empty!",
+    "errorGeneric": "❌ Failed to send request. Please try again."
   },
   "footer": {
     "copyright": "© 2026 Crafted with Perfection • Mojokerto, Indonesia"

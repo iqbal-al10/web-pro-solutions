@@ -13,10 +13,10 @@ const STANDARD_FEATURES = [
 ];
 
 const webTypes = [
-  { id: 'landing',   name: 'Premium Landing Page', price: 1000000,  desc: 'Fokus konversi & penjualan tinggi.', icon: '🚀', category: 'Landing Page' },
+  { id: 'landing',   name: 'Premium Landing Page', price: 799000,  desc: 'Fokus konversi & penjualan tinggi.', icon: '🚀', category: 'Landing Page' },
   { id: 'corporate', name: 'Corporate Business',   price: 2500000,  desc: 'Profil perusahaan profesional.',      icon: '🏢', category: 'Corporate'    },
   { id: 'ecommerce', name: 'Advanced E-Commerce',  price: 5000000,  desc: 'Sistem belanja & payment gateway.',   icon: '🛒', category: 'E-Commerce'   },
-  { id: 'portfolio', name: 'Creative Portfolio',   price: 1500000,  desc: 'Showcase karya & personal branding.', icon: '🎨', category: 'Portfolio'    },
+  { id: 'portfolio', name: 'Creative Portfolio',   price: 1250000,  desc: 'Showcase karya & personal branding.', icon: '🎨', category: 'Portfolio'    },
 ];
 
 const professionalFeatures = [
@@ -331,15 +331,15 @@ export default function PriceCalculator({ t }) {
 
             <div className="mt-6 p-4 bg-slate-50 rounded-2xl space-y-2">
               <div className="flex justify-between text-sm font-bold">
-                <span className="text-slate-600">Paket:</span>
+                <span className="text-slate-600">{t.priceCalculatorModal.packageLabel}</span>
                 <span className="text-slate-900">{selectedType.name}</span>
               </div>
               <div className="flex justify-between text-sm font-bold">
-                <span className="text-slate-600">Professional Add-ons:</span>
+                <span className="text-slate-600">	{t.priceCalculatorModal.addonsLabel}</span>
                 <span className="text-slate-900">{selectedFeatures.length} fitur</span>
               </div>
               <div className="flex justify-between text-lg font-black pt-2 border-t border-slate-200">
-                <span className="text-slate-900">Total:</span>
+                <span className="text-slate-900">{t.priceCalculatorModal.totalLabel}</span>
                 <span className="text-blue-900">Rp {totalPrice.toLocaleString()}</span>
               </div>
             </div>
@@ -349,14 +349,14 @@ export default function PriceCalculator({ t }) {
                 onClick={handleCloseModal}
                 className="flex-1 py-4 rounded-2xl font-black text-[11px] uppercase tracking-wider border-2 border-slate-200 text-slate-500 hover:bg-slate-100 transition-all"
               >
-                Batal
+                {t.priceCalculatorModal.cancelBtn}
               </button>
               <button
                 onClick={handleSubmitOrder}
                 disabled={isProcessing}
                 className="flex-1 py-4 bg-blue-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-wider hover:bg-slate-900 transition-all disabled:opacity-50"
               >
-                {isProcessing ? "Memproses..." : "Kirim Pesanan"}
+                {isProcessing ? t.priceCalculatorModal.submitting : t.priceCalculatorModal.submitBtn}
               </button>
             </div>
           </motion.div>

@@ -66,6 +66,15 @@
     "proAddedPlural": "Pro Features Added",
     "startProject": "Start Project Now"
   },
+  "priceCalculatorModal": {
+    "title": "Konfirmasi Order",
+    "packageLabel": "Paket:",
+    "addonsLabel": "Professional Add-ons:",
+    "totalLabel": "Total:",
+    "cancelBtn": "Batal",
+    "submitBtn": "Kirim Pesanan",
+    "submitting": "Memproses..."
+  },
   "testimonials": {
     "badge": "Success Stories",
     "title": "Review Client Kami"
@@ -84,7 +93,36 @@
     "submitting": "Mengirim..."
   },
   "faq": {
-    "title": "Frequently Asked Questions"
+    "title": "Frequently Asked Questions",
+    "items": [
+      { "q": "Berapa lama pengerjaan website?", "a": "Untuk Landing Page rata-rata 2-3 hari pengerjaan setelah data lengkap kami terima." },
+      { "q": "Apakah website sudah termasuk Hosting dan Domain?", "a": "Ya, paket kami sudah termasuk setup hosting dan domain (.com/.id) selama 1 tahun pertama." },
+      { "q": "Bagaimana jika saya belum punya konten/tulisan?", "a": "Jangan khawatir, tim kami akan membantu menyusun copywriting yang persuasif berdasarkan profil bisnis Anda." },
+      { "q": "Apakah website-nya bisa dibuka dengan lancar di HP?", "a": "Tentu. Semua website yang kami buat bersifat Responsive, artinya tampilan akan menyesuaikan secara otomatis baik di HP, tablet, maupun laptop." },
+      { "q": "Bisa bantu kelola website setelah jadi?", "a": "Bisa. Kami menyediakan layanan maintenance bulanan jika Anda memerlukan bantuan untuk update konten atau pemantauan performa." },
+      { "q": "Apakah saya bisa melakukan revisi?", "a": "Tentu, kami menjamin kepuasan klien dengan adanya jaminan revisi sampai website benar-benar siap sesuai kesepakatan awal." },
+      { "q": "Bagaimana sistem pembayarannya?", "a": "Pembayaran dilakukan dengan DP 50% di awal, dan pelunasan 50% setelah website selesai dan siap dipublikasikan." },
+      { "q": "Apakah ada garansi setelah website selesai?", "a": "Ya, kami memberikan garansi 3 bulan untuk perbaikan bug dan maintenance ringan setelah website live." }
+    ]
+  },
+  "orderModal": {
+    "title": "Pesan Template",
+    "nameLabel": "Nama Lengkap",
+    "namePlaceholder": "Masukkan nama Anda",
+    "phoneLabel": "Nomor WhatsApp",
+    "phonePlaceholder": "Contoh: 08123456789",
+    "notesLabel": "Catatan / Requirement Tambahan",
+    "notesPlaceholder": "Contoh: Butuh integration dengan API tertentu, request desain khusus, dll",
+    "totalLabel": "Total Investasi:",
+    "cancelBtn": "Batal",
+    "submitBtn": "Kirim Pesanan",
+    "submitting": "Mengirim...",
+    "successTitle": "Berhasil!",
+    "successMessage": "✅ Permintaan Anda berhasil dikirim! Tim kami akan segera menghubungi Anda.",
+    "errorTitle": "Perhatian",
+    "errorEmptyName": "Nama tidak boleh kosong!",
+    "errorEmptyPhone": "Nomor WhatsApp tidak boleh kosong!",
+    "errorGeneric": "❌ Gagal mengirim permintaan. Silakan coba lagi."
   },
   "footer": {
     "copyright": "© 2026 Crafted with Perfection • Mojokerto, Indonesia"

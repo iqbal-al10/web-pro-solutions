@@ -12,28 +12,19 @@ import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
 
-// FAQ Component dengan terjemahan
+// FAQ Component dengan terjemahan dari JSON
 const FAQ = ({ id, t }) => {
   const [active, setActive] = useState(null);
-  const items = [
+  const faqItems = t.faq?.items || [
     { q: "Berapa lama pengerjaan website?", a: "Untuk Landing Page rata-rata 2-3 hari pengerjaan setelah data lengkap kami terima." },
     { q: "Apakah website sudah termasuk Hosting dan Domain?", a: "Ya, paket kami sudah termasuk setup hosting dan domain (.com/.id) selama 1 tahun pertama." },
     { q: "Bagaimana jika saya belum punya konten/tulisan?", a: "Jangan khawatir, tim kami akan membantu menyusun copywriting yang persuasif berdasarkan profil bisnis Anda." },
     { q: "Apakah website-nya bisa dibuka dengan lancar di HP?", a: "Tentu. Semua website yang kami buat bersifat Responsive, artinya tampilan akan menyesuaikan secara otomatis baik di HP, tablet, maupun laptop." },
     { q: "Bisa bantu kelola website setelah jadi?", a: "Bisa. Kami menyediakan layanan maintenance bulanan jika Anda memerlukan bantuan untuk update konten atau pemantauan performa." },
     { q: "Apakah saya bisa melakukan revisi?", a: "Tentu, kami menjamin kepuasan klien dengan adanya jaminan revisi sampai website benar-benar siap sesuai kesepakatan awal." },
-    { q: "Bagaimana sistem pembayarannya?", a: "Pembayaran dilakukan dengan DP 50% di awal, dan pelunasan 50% setelah website selesai dan siap dipublikasikan." }
+    { q: "Bagaimana sistem pembayarannya?", a: "Pembayaran dilakukan dengan DP 50% di awal, dan pelunasan 50% setelah website selesai dan siap dipublikasikan." },
+    { q: "Apakah ada garansi setelah website selesai?", a: "Ya, kami memberikan garansi 3 bulan untuk perbaikan bug dan maintenance ringan setelah website live." }
   ];
-
-  // Terjemahan untuk FAQ (opsional, karena konten dinamis)
-  const getLocalizedFAQ = () => {
-    if (t.faq?.title) {
-      return items; // Konten tetap Indonesia karena spesifik
-    }
-    return items;
-  };
-
-  const faqItems = getLocalizedFAQ();
 
   return (
     <div id={id} className="max-w-4xl mx-auto py-32 px-6 font-['Poppins']">

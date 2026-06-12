@@ -19,6 +19,14 @@ export default function ChatBot() {
   const socialButtonRef = useRef(null);
   const messagesEndRef = useRef(null);
 
+  // Variasi respons sapaan
+  const greetingResponses = [
+    "Hai juga! 👋 Ada yang bisa saya bantu hari ini?",
+    "Halo! Selamat datang di Web Pro Solutions. Ada yang ingin ditanyakan?",
+    "Hi! 👋 Senang berkenalan. Ada yang bisa saya bantu?",
+    "Halo kak! 😊 Ada yang perlu dibantu seputar website?",
+  ];
+
   // Quick replies buttons (9 tombol)
   const quickReplies = [
     { label: "💰 Harga", query: "Harga paket website berapa?", type: "query" },
@@ -55,10 +63,10 @@ export default function ChatBot() {
 
   // Harga yang benar (sinkron dengan PriceCalculator)
   const correctPrices = {
-    landing: 1000000,
+    landing: 799000,
     corporate: 2500000,
     ecommerce: 5000000,
-    portfolio: 1500000,
+    portfolio: 1250000,
   };
 
   // Close dropdown when clicking outside
@@ -89,9 +97,24 @@ export default function ChatBot() {
     return 5000; // 5 detik untuk jawaban panjang
   };
 
+  // Fungsi untuk mendapatkan respons sapaan yang bervariasi
+  const getRandomGreeting = () => {
+    const randomIndex = Math.floor(Math.random() * greetingResponses.length);
+    return greetingResponses[randomIndex];
+  };
+
+  // Deteksi waktu (pagi, siang, sore, malam)
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 11) return "Selamat pagi! ☀️ ";
+    if (hour >= 11 && hour < 15) return "Selamat siang! 🌤️ ";
+    if (hour >= 15 && hour < 18) return "Selamat sore! 😊 ";
+    return "Selamat malam! 🌙 ";
+  };
+
   // Cek apakah pesan adalah sapaan
   const isGreeting = (msg) => {
-    const greetings = ["hai", "halo", "hello", "hi", "hey", "oi", "mamen", "cuy", "bro", "bang", "mas", "kak", "mbak", "teh", "p", "pe", "selamat pagi", "selamat siang", "selamat malam"];
+    const greetings = ["hai", "halo", "hello", "hi", "hey", "oi", "mamen", "cuy", "bro", "bang", "mas", "kak", "mbak", "teh", "p", "pe"];
     const msgLower = msg.toLowerCase().trim();
     if (msgLower.length > 30) return false;
     if (greetings.includes(msgLower)) return true;
@@ -108,7 +131,7 @@ export default function ChatBot() {
     setUnansweredCount(0);
   };
 
-  // Keyword responses dengan harga yang benar
+  // Keyword responses dengan respons lebih natural
   const getBotResponse = (userMessage) => {
     const msg = userMessage.toLowerCase().trim();
 
@@ -121,13 +144,13 @@ export default function ChatBot() {
     // HARGA SEMUA PAKET
     if ((msg.includes("harga") || msg.includes("price")) && (msg.includes("paket") || msg.includes("semua") || msg.includes("list"))) {
       resetUnansweredCounter();
-      return `💰 *Daftar Harga Paket Website:*\n\n• Premium Landing Page: Rp 750.000\n• Corporate Business: Rp 2.500.000\n• Advanced E-Commerce: Rp 5.000.000\n• Creative Portfolio: Rp 1.000.000\n\nKetik "harga landing page" untuk info lebih lengkap.`;
+      return `💰 *Daftar Harga Paket Website:*\n\n• Premium Landing Page: Rp 799.000\n• Corporate Business: Rp 2.500.000\n• Advanced E-Commerce: Rp 5.000.000\n• Creative Portfolio: Rp 1.250.000\n\nKetik "harga landing page" untuk info lebih lengkap.`;
     }
 
     // Harga Landing Page
     if ((msg.includes("landing") || msg.includes("landing page")) && (msg.includes("harga") || msg.includes("berapa"))) {
       resetUnansweredCounter();
-      return `🚀 *Premium Landing Page*\n💰 Harga: Rp 750.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
+      return `🚀 *Premium Landing Page*\n💰 Harga: Rp 799.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
     }
 
     // Harga Corporate
@@ -145,7 +168,7 @@ export default function ChatBot() {
     // Harga Portfolio
     if ((msg.includes("portfolio") || msg.includes("portofolio")) && (msg.includes("harga") || msg.includes("berapa"))) {
       resetUnansweredCounter();
-      return `🎨 *Creative Portfolio*\n💰 Harga: Rp 1.000.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Basic CMS Management\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
+      return `🎨 *Creative Portfolio*\n💰 Harga: Rp 1.250.000\n\n📋 *Fitur Standard:*\n• Responsive & Adaptive Design\n• SSL Security Certificate\n• Performance Optimization\n• Basic CMS Management\n• Contact Form Integration\n• Basic SEO Optimization\n• Premium UI/UX Design\n\n💎 *Professional Features* (add-on, tanyakan "fitur professional")\n\nTanyakan "proses" untuk info pengerjaan.`;
     }
 
     // CUSTOM WEBSITE
@@ -209,25 +232,44 @@ export default function ChatBot() {
       return `📱 *Hubungi Admin:*\n\nWhatsApp: 0857-1037-9820\n\nKlik link ini untuk chat langsung:\n[wa.me/6285710379820](wa.me/6285710379820)\n\nTim admin siap membantu 24/7! 🚀`;
     }
 
+    // TENTANG BOS/CEO/OWNER/JURAGAN/KETUA
+    if (msg.includes("siapa bos") || msg.includes("siapa juragan") || msg.includes("siapa ceo") || msg.includes("siapa owner") || 
+        msg.includes("siapa ketua") || msg.includes("bos") || msg.includes("juragan") || msg.includes("ceo") || msg.includes("owner")) {
+      resetUnansweredCounter();
+      return `👨‍💼 *Tentang Bos/Owner:*\n\nWeb Pro Solutions didirikan dan dipimpin oleh **mas Iqbal Al**, seorang full-stack web developer dan digital entrepreneur berpengalaman. Beliau adalah **the one and only the real magister** di balik kesuksesan agensi ini.\n\nAda yang bisa saya bantu? 😊`;
+    }
+
+    // TENTANG PEMBUAT (siapa yang membuat anda / menciptakan anda)
+    if (msg.includes("siapa yang buat") || msg.includes("pembuat anda") || msg.includes("creator anda") || 
+        msg.includes("dibuat oleh siapa") || msg.includes("siapa yang menciptakan") || msg.includes("siapa yang membuat")) {
+      resetUnansweredCounter();
+      return `👨‍💻 *Tentang Pembuat Saya:*\n\nSaya dibuat oleh **the one and only the real magister MAS IQBAL AL**! Beliau adalah full-stack developer yang merancang saya dari nol untuk membantu calon klien mendapatkan informasi dengan cepat dan mudah. Senang bisa membantu Anda! 🚀\n\n🌐 *Portofolio & Kontak:*\n• Instagram: @iqbal_alh\n• GitHub: @iqbal-al10\n• WhatsApp: 0857-1037-9820\n\nAda yang bisa saya bantu hari ini? 😊`;
+    }
+
+    // KAMU BISA APA AJA?
+    if (msg.includes("bisa apa") || msg.includes("kamu bisa apa") || msg.includes("kamu bisa ngapain")) {
+      resetUnansweredCounter();
+      return `🤖 *Yang bisa saya lakukan:*\n\n• Memberi informasi harga paket website\n• Menjelaskan proses pengerjaan\n• Menampilkan fitur yang tersedia (Standard & Professional)\n• Menjawab pertanyaan tentang custom website\n• Info domain, hosting, dan pembayaran\n• Menghubungkan Anda dengan admin\n\nCukup ketik pertanyaan Anda, atau klik tombol di bawah! 😊`;
+    }
+
+    // KELEBIHAN KAMI
+    if (msg.includes("kelebihan") || msg.includes("keunggulan")) {
+      resetUnansweredCounter();
+      return `✨ *Kelebihan Web Pro Solutions:*\n\n• Desain modern & responsive\n• Pengerjaan cepat (3-14 hari)\n• Revisi sampai puas\n• Support 24/7 via WhatsApp\n• Harga terjangkau & transparan\n• Garansi 3 bulan setelah website live\n\nAda yang ingin ditanyakan lebih lanjut? 😊`;
+    }
+
+    // KONSULTASI GRATIS
+    if (msg.includes("konsultasi gratis") || (msg.includes("konsultasi") && msg.includes("gratis"))) {
+      resetUnansweredCounter();
+      return `💬 *Konsultasi Gratis!*\n\nTentu bisa! Konsultasi awal **GRATIS**. Silakan hubungi admin via WhatsApp di [wa.me/6285710379820](wa.me/6285710379820) atau tanyakan langsung di sini.\n\nTim kami siap membantu Anda mewujudkan website impian! 🚀`;
+    }
+
     // TENTANG BOT
     if (msg.includes("siapa nama") || msg.includes("nama anda") || msg.includes("kamu siapa") || msg.includes("siapa anda") || 
-        msg.includes("apa tugas") || msg.includes("tugas anda") || msg.includes("fungsi kamu") || msg.includes("bisa apa") ||
+        msg.includes("apa tugas") || msg.includes("tugas anda") || msg.includes("fungsi kamu") ||
         msg.includes("apa yang harus saya lakukan") || msg.includes("yang harus saya lakukan")) {
       resetUnansweredCounter();
-      return `🤖 *Tentang Saya:*\n\nNama saya *Web Pro Assistant*, asisten virtual dari Web Pro Solutions.\n\n📋 *Tugas saya:*\n• Memberi informasi harga paket website\n• Menjelaskan proses pengerjaan\n• Menampilkan fitur yang tersedia\n• Menjawab pertanyaan tentang domain, hosting, pembayaran\n• Membantu Anda terhubung dengan tim admin\n\n💡 *Yang harus Anda lakukan:*\nCukup ketik pertanyaan Anda, atau klik tombol di bawah ini:\n• "Harga paket website berapa?"\n• "Proses pengerjaan berapa lama?"\n• "Apa saja fitur yang tersedia?"\n• "Bisa custom website sendiri?"\n\nSaya siap membantu! 🚀`;
-    }
-
-    // TENTANG PEMBUAT (diperbaiki)
-    if (msg.includes("siapa yang buat") || msg.includes("pembuat anda") || msg.includes("creator anda") || msg.includes("dibuat oleh siapa")) {
-      resetUnansweredCounter();
-      return `👨‍💻 *Tentang Pembuat Saya:*\n\nSaya dibuat oleh tim Web Pro Solutions, tepatnya oleh the one and only mas Iqbal Al sebagai full-stack developer, untuk membantu calon klien mendapatkan informasi dengan cepat dan mudah.\n\n🌐 *Portofolio & Kontak:*\n• Instagram: @iqbal_alh\n• GitHub: @iqbal-al10\n• WhatsApp: 0857-1037-9820\n\nAda yang bisa saya bantu hari ini? 😊`;
-    }
-
-    // TENTANG BOS (tetap)
-    if (msg.includes("siapa bos") || msg.includes("siapa juragan") || msg.includes("siapa ceo") || msg.includes("siapa owner") || 
-        msg.includes("siapa developer") || msg.includes("bos") || msg.includes("juragan") || msg.includes("ceo") || msg.includes("owner")) {
-      resetUnansweredCounter();
-      return `👨‍💼 *Tentang Bos/Owner:*\n\nWeb Pro Solutions didirikan dan dikelola oleh mas Iqbal Al, seorang web developer dan digital entrepreneur berpengalaman.\n\nAda yang bisa saya bantu hari ini? 😊`;
+      return `🤖 *Tentang Saya:*\n\nNama saya *Web Pro Assistant*, asisten virtual dari Web Pro Solutions.\n\n📋 *Tugas saya:*\n• Memberi informasi harga paket website\n• Menjelaskan proses pengerjaan\n• Menampilkan fitur yang tersedia\n• Menjawab pertanyaan tentang domain, hosting, pembayaran\n• Membantu Anda terhubung dengan tim admin\n\n💡 *Yang harus Anda lakukan:*\nCukup ketik pertanyaan Anda, atau klik tombol di bawah:\n• "Harga paket website berapa?"\n• "Proses pengerjaan berapa lama?"\n• "Apa saja fitur yang tersedia?"\n• "Bisa custom website sendiri?"\n\nSaya siap membantu! 🚀`;
     }
 
     // MENU
@@ -242,10 +284,21 @@ export default function ChatBot() {
       return `Sama-sama! 😊 Senang bisa membantu.\n\nJika ada pertanyaan lain, tanyakan saja ya! Klik tombol di bawah untuk pertanyaan cepat.\n\nJangan lupa follow Instagram kami @iqbal_alh untuk melihat portofolio terbaru!`;
     }
 
-    // SAPAAN
+    // SAPAAN DENGAN VARIASI NATURAL
     if (isGreeting(msg)) {
       resetUnansweredCounter();
-      return `Halo juga! 👋 Senang berkenalan dengan Anda.\n\nAda yang bisa saya bantu hari ini? Coba tanyakan:\n• "proses pengerjaan"\n• "harga landing page"\n• "fitur website"\n• "custom website"\n\nAtau klik tombol di bawah untuk pertanyaan cepat.`;
+      // Deteksi apakah ada kata "pagi", "siang", "sore", "malam"
+      if (msg.includes("pagi")) {
+        return `Selamat pagi! ☀️ ${getRandomGreeting()}`;
+      } else if (msg.includes("siang")) {
+        return `Selamat siang! 🌤️ ${getRandomGreeting()}`;
+      } else if (msg.includes("sore")) {
+        return `Selamat sore! 😊 ${getRandomGreeting()}`;
+      } else if (msg.includes("malam")) {
+        return `Selamat malam! 🌙 ${getRandomGreeting()}`;
+      }
+      // Default sapaan random
+      return getRandomGreeting();
     }
 
     return null;
@@ -277,7 +330,6 @@ export default function ChatBot() {
 
       let botMessage;
       if (response) {
-        // Hitung delay typing berdasarkan panjang respons
         const typingDelay = getTypingDelay(response);
         
         setTimeout(() => {
