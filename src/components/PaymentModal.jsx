@@ -248,8 +248,8 @@ export default function PaymentModal({
   // Render detail pembayaran berdasarkan metode
   const renderPaymentDetail = () => {
     const rekening = {
-      bri: { bank: 'BRI', number: '1234-5678-9012-3456', name: 'Mukhammad Iqballudin Al Huda' },
-      seabank: { bank: 'SeaBank', number: '9876-5432-1098-7654', name: 'Mukhammad Iqballudin Al Huda' },
+      bri: { bank: 'BRI', number: '7879-0100-1474-509', name: 'Mukhammad Iqballudin Al Huda' },
+      seabank: { bank: 'SeaBank', number: '9018-3249-1733', name: 'Mukhammad Iqballudin Al Huda' },
       dana: { bank: 'Dana', number: '085710379820', name: 'Mukhammad Iqballudin Al Huda' },
       gopay: { bank: 'Gopay', number: '085710379820', name: 'Mukhammad Iqballudin Al Huda' },
     };
@@ -298,14 +298,14 @@ export default function PaymentModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div className="fixed inset-0 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={handleClose} />
       
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="relative bg-white rounded-[2.5rem] max-w-lg w-full max-h-[90vh] overflow-y-auto p-8 shadow-2xl border border-slate-100"
+        className="relative bg-white rounded-[2.5rem] max-w-lg w-full max-h-[80vh] overflow-y-auto p-8 shadow-2xl border border-slate-100"
       >
         {/* STEP 1: FORM ORDER */}
         {step === 1 && (
@@ -390,7 +390,7 @@ export default function PaymentModal({
           <>
             <div className="text-center mb-6">
               <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
-                💳 Pembayaran
+                Pembayaran
               </h3>
               <p className="text-slate-500 text-sm mt-1">
                 {orderData?.project_title || project?.title || selectedType?.name}

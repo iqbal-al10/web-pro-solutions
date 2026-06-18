@@ -1396,7 +1396,7 @@ export default function AdminDashboard() {
               Web Pro <span className="text-slate-400">Admin</span>
             </h1>
             <p className="text-[11px] font-bold text-blue-900 uppercase tracking-widest mt-1">
-              IQ Corporation Control Center • v2.0.0 •{" "}
+              IQ Corporation Control Center • v2.1.0 •{" "}
               <span className="text-green-500 font-black">{saveStatus}</span>
             </p>
           </div>
