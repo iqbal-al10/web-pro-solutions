@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { supabase } from "../services/supabaseClient";
 import { useState } from "react";
+import PaymentModal from './PaymentModal';
 
 export default function PortfolioCard({ project, t }) {
-  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [orderForm, setOrderForm] = useState({ name: "", phone: "", notes: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -56,13 +57,16 @@ export default function PortfolioCard({ project, t }) {
     );
   }
 
+  const handleClosePaymentModal = () => {
+  setShowPaymentModal(false);
+  };
+
   const handleOpenModal = () => {
-    setOrderForm({ name: "", phone: "", notes: "" });
-    setShowOrderModal(true);
+  setShowPaymentModal(true);
   };
 
   const handleCloseModal = () => {
-    setShowOrderModal(false);
+    setShowPaymentModal(false);
     setOrderForm({ name: "", phone: "", notes: "" });
   };
 
@@ -227,82 +231,17 @@ export default function PortfolioCard({ project, t }) {
         </div>
       </motion.div>
 
-      {/* Custom Order Modal */}
-      {showOrderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" role="dialog" aria-modal="true" aria-label="Form Pemesanan Template">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={handleCloseModal} />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative bg-white rounded-[2.5rem] max-w-md w-full p-8 shadow-2xl border border-slate-100"
-          >
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{t.orderModal.title}</h3>
-              <p className="text-slate-500 text-sm mt-1">{project.title}</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-2">{t.orderModal.nameLabel}</label>
-                <input
-                  type="text"
-                  value={orderForm.name}
-                  onChange={(e) => setOrderForm({ ...orderForm, name: e.target.value })}
-                  placeholder="Masukkan nama Anda"
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-900 outline-none transition"
-                  aria-label="Nama lengkap"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-2">{t.orderModal.phoneLabel}</label>
-                <input
-                  type="tel"
-                  value={orderForm.phone}
-                  onChange={(e) => setOrderForm({ ...orderForm, phone: e.target.value })}
-                  placeholder="Contoh: 08123456789"
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-900 outline-none transition"
-                  aria-label="Nomor WhatsApp"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-2">{t.orderModal.notesLabel}</label>
-                <textarea
-                  value={orderForm.notes}
-                  onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })}
-                  placeholder="Contoh: Butuh integration dengan API tertentu, request desain khusus, dll..."
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-900 outline-none transition h-24 resize-none"
-                  aria-label="Catatan tambahan"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 p-4 bg-slate-50 rounded-2xl">
-              <div className="flex justify-between text-sm font-bold">
-                <span className="text-slate-600">{t.orderModal.totalLabel}</span>
-                <span className="text-blue-900 text-lg">Rp {project.base_price?.toLocaleString()}</span>
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-8">
-              <button
-                onClick={handleCloseModal}
-                className="flex-1 py-4 rounded-2xl font-black text-[11px] uppercase tracking-wider border-2 border-slate-200 text-slate-500 hover:bg-slate-100 transition-all"
-                aria-label="Batal pesan"
-              >
-                {t.orderModal.cancelBtn}
-              </button>
-              <button
-                onClick={handleSubmitOrder}
-                disabled={isSubmitting}
-                className="flex-1 py-4 bg-blue-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-wider hover:bg-slate-900 transition-all disabled:opacity-50"
-                aria-label="Kirim pesanan"
-              >
-                {isSubmitting ? t.orderModal.submitting : t.orderModal.submitBtn}
-              </button>
-            </div>
-          </motion.div>
-        </div>
+      {/* Show Payment Modal */}
+      {showPaymentModal && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={handleClosePaymentModal}
+          project={project}
+          selectedType={null}
+          selectedFeatures={[]}
+          totalPrice={project.base_price || 0}
+          t={t}
+        />
       )}
 
       {/* Error/Success Modal */}

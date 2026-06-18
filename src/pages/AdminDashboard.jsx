@@ -5,30 +5,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { 
-  Chart as ChartJS, 
-  ArcElement, 
-  Tooltip, 
-  Legend, 
-  CategoryScale, 
-  LinearScale, 
-  BarElement, 
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
   Title,
   PointElement,
-  LineElement
-} from 'chart.js';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+  LineElement,
+} from "chart.js";
+import { Bar, Line, Doughnut } from "react-chartjs-2";
 
 ChartJS.register(
-  ArcElement, 
-  Tooltip, 
-  Legend, 
-  CategoryScale, 
-  LinearScale, 
-  BarElement, 
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
   Title,
   PointElement,
-  LineElement
+  LineElement,
 );
 
 export default function AdminDashboard() {
@@ -41,6 +41,8 @@ export default function AdminDashboard() {
   const [editId, setEditId] = useState(null);
   const [saveStatus, setSaveStatus] = useState("");
   const navigate = useNavigate();
+  const [waitingPayments, setWaitingPayments] = useState([]);
+  const [waitingLoading, setWaitingLoading] = useState(false);
 
   // Dark Mode State
   const [darkMode, setDarkMode] = useState(() => {
@@ -75,7 +77,7 @@ export default function AdminDashboard() {
     deviceDetails: [],
     topPages: [],
     visitorsChartData: [],
-    buyersChartData: []
+    buyersChartData: [],
   });
   const [dateRange, setDateRange] = useState("week");
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -155,6 +157,65 @@ export default function AdminDashboard() {
     daily_task: "",
     notes: "",
   });
+
+  // Fetch Waiting Payment
+  const fetchWaitingPayments = async () => {
+    setWaitingLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("projects")
+        .select(
+          `
+        *,
+        payments(*)
+      `,
+        )
+        .eq("status", "Menunggu Konfirmasi")
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      setWaitingPayments(data || []);
+    } catch (error) {
+      console.error("Error fetching waiting payments:", error);
+      showAlert("Gagal mengambil data: " + error.message);
+    } finally {
+      setWaitingLoading(false);
+    }
+  };
+
+  const confirmPayment = async (projectId, paymentId) => {
+    showConfirm(
+      "Konfirmasi Pembayaran",
+      "Apakah Anda yakin pembayaran sudah valid? Proyek akan masuk ke Production Line.",
+      async () => {
+        try {
+          // Update status payment
+          await supabase
+            .from("payments")
+            .update({
+              payment_status: "confirmed",
+              confirmed_at: new Date().toISOString(),
+            })
+            .eq("id", paymentId);
+
+          // Update status project menjadi 'Pending'
+          await supabase
+            .from("projects")
+            .update({ status: "Pending" })
+            .eq("id", projectId);
+
+          showAlert(
+            "✅ Pembayaran dikonfirmasi! Proyek masuk ke Production Line.",
+          );
+          fetchWaitingPayments();
+          fetchProjects();
+        } catch (error) {
+          console.error("Error confirming payment:", error);
+          showAlert("❌ Gagal konfirmasi: " + error.message);
+        }
+      },
+    );
+  };
 
   // Finance Data
   const [completedProjects, setCompletedProjects] = useState([]);
@@ -242,7 +303,7 @@ export default function AdminDashboard() {
       .order("created_at", { ascending: false });
     setPortfolios(data || []);
   };
-  
+
   const fetchTestimonials = async () => {
     const { data } = await supabase
       .from("testimonials")
@@ -289,41 +350,47 @@ export default function AdminDashboard() {
     setAnalyticsLoading(true);
     try {
       const { data: visitorsData, error: visitorsError } = await supabase
-        .from('visitors')
-        .select('*')
-        .order('visited_at', { ascending: false });
-      
+        .from("visitors")
+        .select("*")
+        .order("visited_at", { ascending: false });
+
       if (visitorsError) throw visitorsError;
-      
+
       const { data: projectsData, error: projectsError } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+        .from("projects")
+        .select("*")
+        .order("created_at", { ascending: false });
+
       if (projectsError) throw projectsError;
-      
+
       const uniqueSessions = new Set();
-      visitorsData.forEach(v => uniqueSessions.add(v.session_id));
+      visitorsData.forEach((v) => uniqueSessions.add(v.session_id));
       const totalUniqueVisitors = uniqueSessions.size;
       const totalPageViews = visitorsData.length;
-      
+
       const uniqueBuyers = new Set();
-      projectsData.forEach(p => {
+      projectsData.forEach((p) => {
         if (p.no_hp) uniqueBuyers.add(p.no_hp);
         else uniqueBuyers.add(p.client_name);
       });
       const totalBuyers = uniqueBuyers.size;
-      
-      const today = new Date().toISOString().split('T')[0];
-      const todayVisitors = visitorsData.filter(v => v.visited_at?.startsWith(today)).length;
+
+      const today = new Date().toISOString().split("T")[0];
+      const todayVisitors = visitorsData.filter((v) =>
+        v.visited_at?.startsWith(today),
+      ).length;
       const todayUniqueSessions = new Set();
-      visitorsData.filter(v => v.visited_at?.startsWith(today)).forEach(v => todayUniqueSessions.add(v.session_id));
+      visitorsData
+        .filter((v) => v.visited_at?.startsWith(today))
+        .forEach((v) => todayUniqueSessions.add(v.session_id));
       const todayUniqueVisitors = todayUniqueSessions.size;
-      const todayBuyers = projectsData.filter(p => p.created_at?.startsWith(today)).length;
-      
+      const todayBuyers = projectsData.filter((p) =>
+        p.created_at?.startsWith(today),
+      ).length;
+
       const sources = { direct: 0, google: 0, social: 0, referral: 0 };
       const sourceSessionMap = new Map();
-      visitorsData.forEach(v => {
+      visitorsData.forEach((v) => {
         const key = `${v.session_id}|${v.source}`;
         if (!sourceSessionMap.has(key)) {
           sourceSessionMap.set(key, true);
@@ -331,10 +398,10 @@ export default function AdminDashboard() {
           else sources.direct++;
         }
       });
-      
+
       const devices = { mobile: 0, tablet: 0, desktop: 0 };
       const deviceSessionMap = new Map();
-      visitorsData.forEach(v => {
+      visitorsData.forEach((v) => {
         const key = `${v.session_id}|${v.device}`;
         if (!deviceSessionMap.has(key)) {
           deviceSessionMap.set(key, true);
@@ -345,16 +412,16 @@ export default function AdminDashboard() {
 
       // Hitung device details (brand, model, browser, OS)
       const deviceMap = new Map();
-      visitorsData.forEach(v => {
+      visitorsData.forEach((v) => {
         const key = `${v.device_brand}|${v.device_model}|${v.browser_name}|${v.os_name}|${v.os_version}`;
         if (!deviceMap.has(key)) {
           deviceMap.set(key, {
-            brand: v.device_brand || 'Unknown',
-            model: v.device_model || 'Unknown',
-            browser: v.browser_name || 'Unknown',
-            os: v.os_name || 'Unknown',
-            osVersion: v.os_version || 'Unknown',
-            count: 1
+            brand: v.device_brand || "Unknown",
+            model: v.device_model || "Unknown",
+            browser: v.browser_name || "Unknown",
+            os: v.os_name || "Unknown",
+            osVersion: v.os_version || "Unknown",
+            count: 1,
           });
         } else {
           const existing = deviceMap.get(key);
@@ -366,33 +433,37 @@ export default function AdminDashboard() {
       const deviceDetails = Array.from(deviceMap.values())
         .sort((a, b) => b.count - a.count)
         .slice(0, 20); // Ambil 20 terbanyak
-      
+
       const pageCount = {};
-      visitorsData.forEach(v => {
-        const page = v.page || '/';
+      visitorsData.forEach((v) => {
+        const page = v.page || "/";
         pageCount[page] = (pageCount[page] || 0) + 1;
       });
       const topPages = Object.entries(pageCount)
         .map(([page, views]) => ({ page, views }))
         .sort((a, b) => b.views - a.views)
         .slice(0, 5);
-      
+
       const visitorsChartData = [];
       const buyersChartData = [];
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        const dayName = date.toLocaleDateString('id-ID', { weekday: 'short' });
-        
+        const dateStr = date.toISOString().split("T")[0];
+        const dayName = date.toLocaleDateString("id-ID", { weekday: "short" });
+
         const dayVisitors = new Set();
-        visitorsData.filter(v => v.visited_at?.startsWith(dateStr)).forEach(v => dayVisitors.add(v.session_id));
-        const dayBuyers = projectsData.filter(p => p.created_at?.startsWith(dateStr)).length;
-        
+        visitorsData
+          .filter((v) => v.visited_at?.startsWith(dateStr))
+          .forEach((v) => dayVisitors.add(v.session_id));
+        const dayBuyers = projectsData.filter((p) =>
+          p.created_at?.startsWith(dateStr),
+        ).length;
+
         visitorsChartData.push({ date: dayName, visitors: dayVisitors.size });
         buyersChartData.push({ date: dayName, buyers: dayBuyers });
       }
-      
+
       setAnalyticsData({
         totalVisitors: visitorsData.length,
         totalUniqueVisitors: totalUniqueVisitors,
@@ -407,12 +478,11 @@ export default function AdminDashboard() {
         deviceDetails: deviceDetails,
         topPages: topPages,
         visitorsChartData: visitorsChartData,
-        buyersChartData: buyersChartData
+        buyersChartData: buyersChartData,
       });
-      
     } catch (error) {
-      console.error('Error fetching analytics:', error);
-      showAlert('Gagal mengambil data analytics: ' + error.message);
+      console.error("Error fetching analytics:", error);
+      showAlert("Gagal mengambil data analytics: " + error.message);
     } finally {
       setAnalyticsLoading(false);
     }
@@ -420,27 +490,27 @@ export default function AdminDashboard() {
 
   const handleResetAnalytics = async () => {
     showConfirm(
-      'Reset Analytics Data',
-      'Peringatan! Tindakan ini akan MENGHAPUS semua data pengunjung (tabel visitors). Data pembeli (projects) TIDAK akan terhapus. Lanjutkan?',
+      "Reset Analytics Data",
+      "Peringatan! Tindakan ini akan MENGHAPUS semua data pengunjung (tabel visitors). Data pembeli (projects) TIDAK akan terhapus. Lanjutkan?",
       async () => {
         try {
           const { error } = await supabase
-            .from('visitors')
+            .from("visitors")
             .delete()
-            .neq('id', 0);
-            
+            .neq("id", 0);
+
           if (error) throw error;
-          
-          localStorage.removeItem('visitor_session_id');
-          localStorage.removeItem('visitor_last_active');
-          
-          showAlert('✅ Data analytics berhasil direset!');
+
+          localStorage.removeItem("visitor_session_id");
+          localStorage.removeItem("visitor_last_active");
+
+          showAlert("✅ Data analytics berhasil direset!");
           fetchAnalyticsData();
         } catch (error) {
-          console.error('Error resetting analytics:', error);
-          showAlert('❌ Gagal mereset data: ' + error.message);
+          console.error("Error resetting analytics:", error);
+          showAlert("❌ Gagal mereset data: " + error.message);
         }
-      }
+      },
     );
   };
 
@@ -455,19 +525,19 @@ export default function AdminDashboard() {
     try {
       const tables = ["portfolios", "projects", "testimonials"];
       const backupData = {};
-      
+
       for (const table of tables) {
         const { data, error } = await supabase.from(table).select("*");
         if (error) throw error;
         backupData[table] = data;
       }
-      
+
       const backupPackage = {
         version: "1.0",
         timestamp: new Date().toISOString(),
-        data: backupData
+        data: backupData,
       };
-      
+
       const jsonStr = JSON.stringify(backupPackage, null, 2);
       const blob = new Blob([jsonStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -478,17 +548,22 @@ export default function AdminDashboard() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
-      const history = JSON.parse(localStorage.getItem("backup_history") || "[]");
+
+      const history = JSON.parse(
+        localStorage.getItem("backup_history") || "[]",
+      );
       history.unshift({
         id: Date.now(),
         date: new Date().toISOString(),
         filename: `webpro_backup_${new Date().toISOString().split("T")[0]}.json`,
-        size: blob.size
+        size: blob.size,
       });
-      localStorage.setItem("backup_history", JSON.stringify(history.slice(0, 10)));
+      localStorage.setItem(
+        "backup_history",
+        JSON.stringify(history.slice(0, 10)),
+      );
       setBackupHistory(history.slice(0, 10));
-      
+
       showAlert("✅ Backup berhasil! File telah diunduh.");
     } catch (error) {
       console.error("Backup error:", error);
@@ -503,7 +578,7 @@ export default function AdminDashboard() {
       showAlert("Silakan pilih file backup terlebih dahulu!");
       return;
     }
-    
+
     showConfirm(
       "Restore Data",
       "Peringatan! Restore data akan MENIMPA data yang ada saat ini. Lanjutkan?",
@@ -512,11 +587,11 @@ export default function AdminDashboard() {
         try {
           const fileContent = await restoreFile.text();
           const backupData = JSON.parse(fileContent);
-          
+
           if (!backupData.data || !backupData.version) {
             throw new Error("Format file backup tidak valid");
           }
-          
+
           const tables = ["portfolios", "projects", "testimonials"];
           for (const table of tables) {
             if (backupData.data[table]) {
@@ -526,11 +601,11 @@ export default function AdminDashboard() {
               }
             }
           }
-          
+
           await fetchPortfolios();
           await fetchProjects();
           await fetchTestimonials();
-          
+
           setRestoreFile(null);
           showAlert("✅ Restore data berhasil!");
         } catch (error) {
@@ -539,7 +614,7 @@ export default function AdminDashboard() {
         } finally {
           setBackupLoading(false);
         }
-      }
+      },
     );
   };
 
@@ -770,7 +845,7 @@ export default function AdminDashboard() {
         features: check ? [...filtered, ...MASTER_STANDARD_FEATURES] : filtered,
       };
     });
-    
+
   const handleSelectAllProfessional = (check) =>
     setFormData((prev) => {
       const cur = Array.isArray(prev.features) ? prev.features : [];
@@ -1028,12 +1103,12 @@ export default function AdminDashboard() {
   // ========== SUBMIT PROJECT ==========
   const handleProjectSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!projectData.project_title) {
       showAlert("Silakan pilih catalog terlebih dahulu!");
       return;
     }
-    
+
     setIsSubmitting(true);
 
     const featuresText = Array.isArray(projectData.features)
@@ -1099,14 +1174,14 @@ export default function AdminDashboard() {
           .from("testimonials")
           .delete()
           .eq("id", id);
-        
+
         if (error) {
           showAlert("Gagal menghapus: " + error.message);
         } else {
           fetchTestimonials();
           showAlert("✅ Testimonial berhasil dihapus!");
         }
-      }
+      },
     );
   };
 
@@ -1143,104 +1218,125 @@ export default function AdminDashboard() {
   const archiveProjects = projects.filter((p) => p.status === "Selesai");
 
   const archiveByCategory = {
-    "Landing Page": archiveProjects.filter((p) => p.website_category === "Landing Page"),
-    Corporate: archiveProjects.filter((p) => p.website_category === "Corporate"),
-    "E-Commerce": archiveProjects.filter((p) => p.website_category === "E-Commerce"),
-    Portfolio: archiveProjects.filter((p) => p.website_category === "Portfolio"),
-    Custom: archiveProjects.filter((p) => !p.website_category || p.website_category === "Custom"),
+    "Landing Page": archiveProjects.filter(
+      (p) => p.website_category === "Landing Page",
+    ),
+    Corporate: archiveProjects.filter(
+      (p) => p.website_category === "Corporate",
+    ),
+    "E-Commerce": archiveProjects.filter(
+      (p) => p.website_category === "E-Commerce",
+    ),
+    Portfolio: archiveProjects.filter(
+      (p) => p.website_category === "Portfolio",
+    ),
+    Custom: archiveProjects.filter(
+      (p) => !p.website_category || p.website_category === "Custom",
+    ),
   };
 
   // ========== CHART COMPONENTS (ANALYTICS) ==========
   const CombinedChart = () => {
     const data = {
-      labels: analyticsData.visitorsChartData.map(d => d.date),
+      labels: analyticsData.visitorsChartData.map((d) => d.date),
       datasets: [
         {
-          label: 'Pengunjung (Unique Session)',
-          data: analyticsData.visitorsChartData.map(d => d.visitors),
-          backgroundColor: 'rgba(59, 130, 246, 0.5)',
-          borderColor: 'rgb(59, 130, 246)',
+          label: "Pengunjung (Unique Session)",
+          data: analyticsData.visitorsChartData.map((d) => d.visitors),
+          backgroundColor: "rgba(59, 130, 246, 0.5)",
+          borderColor: "rgb(59, 130, 246)",
           borderWidth: 2,
-          tension: 0.3
+          tension: 0.3,
         },
         {
-          label: 'Pembeli (Order)',
-          data: analyticsData.buyersChartData.map(d => d.buyers),
-          backgroundColor: 'rgba(16, 185, 129, 0.5)',
-          borderColor: 'rgb(16, 185, 129)',
+          label: "Pembeli (Order)",
+          data: analyticsData.buyersChartData.map((d) => d.buyers),
+          backgroundColor: "rgba(16, 185, 129, 0.5)",
+          borderColor: "rgb(16, 185, 129)",
           borderWidth: 2,
-          tension: 0.3
-        }
-      ]
+          tension: 0.3,
+        },
+      ],
     };
-    
+
     const options = {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top' },
-        tooltip: { mode: 'index', intersect: false }
+        legend: { position: "top" },
+        tooltip: { mode: "index", intersect: false },
       },
       scales: {
-        y: { beginAtZero: true, grid: { color: darkMode ? '#334155' : '#e2e8f0' } },
-        x: { grid: { display: false } }
-      }
+        y: {
+          beginAtZero: true,
+          grid: { color: darkMode ? "#334155" : "#e2e8f0" },
+        },
+        x: { grid: { display: false } },
+      },
     };
-    
+
     return <Line data={data} options={options} />;
   };
 
   const DeviceChart = () => {
     const data = {
-      labels: ['Mobile', 'Tablet', 'Desktop'],
-      datasets: [{
-        data: [
-          analyticsData.deviceStats.mobile,
-          analyticsData.deviceStats.tablet,
-          analyticsData.deviceStats.desktop
-        ],
-        backgroundColor: ['#3b82f6', '#06b6d4', '#10b981'],
-        borderWidth: 0,
-      }]
+      labels: ["Mobile", "Tablet", "Desktop"],
+      datasets: [
+        {
+          data: [
+            analyticsData.deviceStats.mobile,
+            analyticsData.deviceStats.tablet,
+            analyticsData.deviceStats.desktop,
+          ],
+          backgroundColor: ["#3b82f6", "#06b6d4", "#10b981"],
+          borderWidth: 0,
+        },
+      ],
     };
-    
+
     const options = {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom' } }
+      plugins: { legend: { position: "bottom" } },
     };
-    
+
     return <Doughnut data={data} options={options} />;
   };
 
   const TrafficChart = () => {
     const data = {
-      labels: ['Direct', 'Google', 'Social Media', 'Referral'],
-      datasets: [{
-        label: 'Sumber Traffic (Unique Session)',
-        data: [
-          analyticsData.trafficSources.direct,
-          analyticsData.trafficSources.google,
-          analyticsData.trafficSources.social,
-          analyticsData.trafficSources.referral
-        ],
-        backgroundColor: ['#3b82f6', '#ef4444', '#8b5cf6', '#f59e0b'],
-        borderRadius: 8,
-      }]
+      labels: ["Direct", "Google", "Social Media", "Referral"],
+      datasets: [
+        {
+          label: "Sumber Traffic (Unique Session)",
+          data: [
+            analyticsData.trafficSources.direct,
+            analyticsData.trafficSources.google,
+            analyticsData.trafficSources.social,
+            analyticsData.trafficSources.referral,
+          ],
+          backgroundColor: ["#3b82f6", "#ef4444", "#8b5cf6", "#f59e0b"],
+          borderRadius: 8,
+        },
+      ],
     };
-    
+
     const options = {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { position: 'top' } }
+      plugins: { legend: { position: "top" } },
     };
-    
+
     return <Bar data={data} options={options} />;
   };
 
   const RevenueChart = () => {
     if (!chartData || chartData.values.length === 0) {
-      return <p className="text-center text-slate-400 text-sm py-8">Belum ada data untuk ditampilkan</p>;
+      return (
+        <p className="text-center text-slate-400 text-sm py-8">
+          Belum ada data untuk ditampilkan
+        </p>
+      );
     }
 
     const maxValue = Math.max(...chartData.values);
@@ -1248,7 +1344,9 @@ export default function AdminDashboard() {
 
     return (
       <div className="mt-6">
-        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Revenue Chart by Category</p>
+        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">
+          Revenue Chart by Category
+        </p>
         <div className="space-y-3">
           {chartData.labels.map((label, idx) => {
             const percentage = (chartData.values[idx] / maxValue) * 100;
@@ -1256,7 +1354,9 @@ export default function AdminDashboard() {
               <div key={label}>
                 <div className="flex justify-between text-[10px] font-bold mb-1">
                   <span className="text-slate-600">{label}</span>
-                  <span className="text-blue-900">Rp {chartData.values[idx].toLocaleString()}</span>
+                  <span className="text-blue-900">
+                    Rp {chartData.values[idx].toLocaleString()}
+                  </span>
                 </div>
                 <div className="w-full h-6 bg-slate-100 rounded-full overflow-hidden">
                   <motion.div
@@ -1264,7 +1364,10 @@ export default function AdminDashboard() {
                     animate={{ width: `${percentage}%` }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
                     className="h-full rounded-full flex items-center justify-end px-2 text-[8px] font-black text-white"
-                    style={{ backgroundColor: colors[idx % colors.length], width: `${percentage}%` }}
+                    style={{
+                      backgroundColor: colors[idx % colors.length],
+                      width: `${percentage}%`,
+                    }}
                   >
                     {percentage > 20 && `${Math.round(percentage)}%`}
                   </motion.div>
@@ -1278,12 +1381,18 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className={`min-h-screen font-['Poppins'] pb-20 transition-all duration-300 ${darkMode ? "dark bg-slate-900" : "bg-slate-50"}`}>
+    <div
+      className={`min-h-screen font-['Poppins'] pb-20 transition-all duration-300 ${darkMode ? "dark bg-slate-900" : "bg-slate-50"}`}
+    >
       <div className="max-w-7xl mx-auto px-8 pt-24">
         {/* Header with Dark Mode Toggle */}
-        <div className={`flex justify-between items-end mb-10 sticky top-0 py-4 z-50 backdrop-blur-md ${darkMode ? "bg-slate-900/80 border-slate-700" : "bg-slate-50/80 border-slate-200/50"} border-b`}>
+        <div
+          className={`flex justify-between items-end mb-10 sticky top-0 py-4 z-50 backdrop-blur-md ${darkMode ? "bg-slate-900/80 border-slate-700" : "bg-slate-50/80 border-slate-200/50"} border-b`}
+        >
           <div>
-            <h1 className={`text-3xl font-black uppercase tracking-tighter italic ${darkMode ? "text-white" : "text-blue-900"}`}>
+            <h1
+              className={`text-3xl font-black uppercase tracking-tighter italic ${darkMode ? "text-white" : "text-blue-900"}`}
+            >
               Web Pro <span className="text-slate-400">Admin</span>
             </h1>
             <p className="text-[11px] font-bold text-blue-900 uppercase tracking-widest mt-1">
@@ -1296,12 +1405,32 @@ export default function AdminDashboard() {
             className={`p-3 rounded-2xl transition-all ${darkMode ? "bg-slate-800 text-yellow-400 hover:bg-slate-700" : "bg-white text-slate-600 hover:bg-slate-100"} border border-slate-200 shadow-sm`}
           >
             {darkMode ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                />
               </svg>
             ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                />
               </svg>
             )}
           </button>
@@ -1316,11 +1445,17 @@ export default function AdminDashboard() {
             className="fixed bottom-6 right-6 z-50 bg-blue-900 text-white p-4 rounded-2xl shadow-2xl max-w-sm"
           >
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center text-xl">📋</div>
+              <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center text-xl">
+                📋
+              </div>
               <div>
-                <p className="font-black text-xs uppercase tracking-wider">Permintaan Baru!</p>
+                <p className="font-black text-xs uppercase tracking-wider">
+                  Permintaan Baru!
+                </p>
                 <p className="text-sm font-bold">{latestOrder.client_name}</p>
-                <p className="text-[10px] opacity-75">{latestOrder.project_title}</p>
+                <p className="text-[10px] opacity-75">
+                  {latestOrder.project_title}
+                </p>
                 <button
                   onClick={() => {
                     setActiveTab("projects");
@@ -1337,29 +1472,42 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <div className="flex flex-wrap justify-between items-center mb-10 gap-4">
-          <div className={`flex gap-2 p-2 rounded-[2.5rem] w-fit border shadow-sm flex-wrap ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
-            {["portfolio", "projects", "testimonials", "finance", "analytics", "backup"].map((tab) => (
+          <div
+            className={`flex gap-2 p-2 rounded-[2.5rem] w-fit border shadow-sm flex-wrap ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}
+          >
+            {[
+              "portfolio",
+              "projects",
+              "testimonials",
+              "finance",
+              "analytics",
+              "backup",
+              "waiting",
+            ].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
                   setActiveTab(tab);
                   if (tab === "analytics") fetchAnalyticsData();
                   if (tab === "backup") loadBackupHistory();
+                  if (tab === "waiting") fetchWaitingPayments();
                 }}
                 className={`px-6 py-3 rounded-[2rem] font-black text-[11px] uppercase tracking-widest transition-all relative ${activeTab === tab ? "text-white" : darkMode ? "text-slate-400 hover:text-white" : "text-slate-400 hover:text-blue-900"}`}
               >
                 <span className="relative z-10">
-                  {tab === "portfolio"
-                    ? "Catalog Management"
-                    : tab === "projects"
-                      ? `Production Line${pendingProjects.length > 0 ? ` (${pendingProjects.length} Pending)` : ""}`
-                      : tab === "testimonials"
-                        ? "Client Feedback"
-                        : tab === "finance"
-                          ? "Finance"
-                          : tab === "analytics"
-                            ? "Analytics"
-                            : "Backup"}
+                  {tab === "waiting"
+                    ? "Menunggu Konfirmasi"
+                    : tab === "portfolio"
+                      ? "Catalog Management"
+                      : tab === "projects"
+                        ? `Production Line${pendingProjects.length > 0 ? ` (${pendingProjects.length} Pending)` : ""}`
+                        : tab === "testimonials"
+                          ? "Client Feedback"
+                          : tab === "finance"
+                            ? "Finance"
+                            : tab === "analytics"
+                              ? "Analytics"
+                              : "Backup"}
                 </span>
                 {activeTab === tab && (
                   <motion.div
@@ -1395,7 +1543,9 @@ export default function AdminDashboard() {
                     onSubmit={handleSubmit}
                     className={`p-10 rounded-[3rem] border shadow-sm sticky top-28 max-h-[80vh] overflow-y-auto ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}
                   >
-                    <h2 className={`font-black uppercase text-sm mb-8 tracking-widest ${darkMode ? "text-blue-400" : "text-blue-900"}`}>
+                    <h2
+                      className={`font-black uppercase text-sm mb-8 tracking-widest ${darkMode ? "text-blue-400" : "text-blue-900"}`}
+                    >
                       {isEditing ? "Update Template" : "New Catalog Item"}
                     </h2>
                     <div className="space-y-4">
@@ -1428,7 +1578,9 @@ export default function AdminDashboard() {
                         className={`w-full p-4 rounded-2xl border-none text-sm font-bold shadow-inner ${darkMode ? "bg-slate-700 text-white placeholder:text-slate-400" : "bg-slate-50"}`}
                         required
                       />
-                      <div className={`p-4 rounded-2xl border-2 border-dashed text-center ${darkMode ? "bg-slate-700 border-slate-600" : "bg-slate-50 border-slate-200"}`}>
+                      <div
+                        className={`p-4 rounded-2xl border-2 border-dashed text-center ${darkMode ? "bg-slate-700 border-slate-600" : "bg-slate-50 border-slate-200"}`}
+                      >
                         <p className="text-[10px] font-black text-slate-400 uppercase mb-2">
                           Thumbnail Image
                         </p>
@@ -1469,7 +1621,9 @@ export default function AdminDashboard() {
                       />
 
                       <div className="pt-2">
-                        <label className={`text-[10px] font-black uppercase ml-1 mb-3 block tracking-widest italic border-b pb-2 ${darkMode ? "text-blue-400 border-slate-700" : "text-blue-900 border-slate-100"}`}>
+                        <label
+                          className={`text-[10px] font-black uppercase ml-1 mb-3 block tracking-widest italic border-b pb-2 ${darkMode ? "text-blue-400 border-slate-700" : "text-blue-900 border-slate-100"}`}
+                        >
                           Template Features Assignment
                         </label>
 
@@ -1501,14 +1655,18 @@ export default function AdminDashboard() {
                                 <div className="flex gap-2 mb-2">
                                   <button
                                     type="button"
-                                    onClick={() => handleSelectAllStandard(true)}
+                                    onClick={() =>
+                                      handleSelectAllStandard(true)
+                                    }
                                     className="flex-1 py-1.5 bg-blue-50 text-blue-900 font-black text-[9px] uppercase rounded-lg border border-blue-200"
                                   >
                                     Checklist Semua
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => handleSelectAllStandard(false)}
+                                    onClick={() =>
+                                      handleSelectAllStandard(false)
+                                    }
                                     className="flex-1 py-1.5 bg-slate-50 text-slate-400 font-bold text-[9px] uppercase rounded-lg border border-slate-200"
                                   >
                                     Uncheck Semua
@@ -1522,7 +1680,9 @@ export default function AdminDashboard() {
                                     <button
                                       type="button"
                                       key={feat}
-                                      onClick={() => handleFormFeatureToggle(feat)}
+                                      onClick={() =>
+                                        handleFormFeatureToggle(feat)
+                                      }
                                       className={`w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition-all ${checked ? "bg-blue-50 border-blue-300 text-blue-900 font-bold" : darkMode ? "bg-slate-700 border-slate-600 text-slate-300" : "bg-slate-50/50 border-slate-100 text-slate-500"}`}
                                     >
                                       <div
@@ -1544,7 +1704,9 @@ export default function AdminDashboard() {
                         <div className="border rounded-2xl overflow-hidden">
                           <button
                             type="button"
-                            onClick={() => setProfessionalOpen(!professionalOpen)}
+                            onClick={() =>
+                              setProfessionalOpen(!professionalOpen)
+                            }
                             className={`w-full p-3.5 flex justify-between items-center text-[10px] font-black uppercase tracking-wider ${darkMode ? "bg-slate-700 text-blue-400" : "bg-slate-100/60 text-blue-900"}`}
                           >
                             <span>
@@ -1569,14 +1731,18 @@ export default function AdminDashboard() {
                                 <div className="flex gap-2 mb-2">
                                   <button
                                     type="button"
-                                    onClick={() => handleSelectAllProfessional(true)}
+                                    onClick={() =>
+                                      handleSelectAllProfessional(true)
+                                    }
                                     className="flex-1 py-1.5 bg-purple-50 text-purple-900 font-black text-[9px] uppercase rounded-lg border border-purple-200"
                                   >
                                     Checklist Semua
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => handleSelectAllProfessional(false)}
+                                    onClick={() =>
+                                      handleSelectAllProfessional(false)
+                                    }
                                     className="flex-1 py-1.5 bg-slate-50 text-slate-400 font-bold text-[9px] uppercase rounded-lg border border-slate-200"
                                   >
                                     Uncheck Semua
@@ -1590,7 +1756,9 @@ export default function AdminDashboard() {
                                     <button
                                       type="button"
                                       key={feat}
-                                      onClick={() => handleFormFeatureToggle(feat)}
+                                      onClick={() =>
+                                        handleFormFeatureToggle(feat)
+                                      }
                                       className={`w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition-all ${checked ? "bg-purple-50 border-purple-300 text-purple-900 font-bold" : darkMode ? "bg-slate-700 border-slate-600 text-slate-300" : "bg-slate-50/50 border-slate-100 text-slate-500"}`}
                                     >
                                       <div
@@ -1667,7 +1835,9 @@ export default function AdminDashboard() {
                             alt=""
                           />
                           <div className="truncate">
-                            <h3 className={`font-black uppercase text-sm italic truncate ${darkMode ? "text-white" : "text-slate-900"}`}>
+                            <h3
+                              className={`font-black uppercase text-sm italic truncate ${darkMode ? "text-white" : "text-slate-900"}`}
+                            >
                               {p.title}
                             </h3>
                             <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
@@ -1775,7 +1945,9 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="mt-4 mb-6">
-                              <h3 className={`font-black text-lg uppercase tracking-tighter italic ${darkMode ? "text-white" : "text-slate-900"}`}>
+                              <h3
+                                className={`font-black text-lg uppercase tracking-tighter italic ${darkMode ? "text-white" : "text-slate-900"}`}
+                              >
                                 {proj.client_name}
                               </h3>
                               <p className="text-blue-600 font-bold text-[10px] uppercase tracking-widest mt-1">
@@ -1807,7 +1979,9 @@ export default function AdminDashboard() {
                               )}
                             </div>
 
-                            <div className={`rounded-2xl p-4 mb-6 space-y-2 max-h-40 overflow-y-auto ${darkMode ? "bg-slate-700" : "bg-slate-50"}`}>
+                            <div
+                              className={`rounded-2xl p-4 mb-6 space-y-2 max-h-40 overflow-y-auto ${darkMode ? "bg-slate-700" : "bg-slate-50"}`}
+                            >
                               <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-2">
                                 Features Diminta
                               </p>
@@ -1871,7 +2045,9 @@ export default function AdminDashboard() {
                         );
                       })}
                     </div>
-                    <hr className={`my-8 ${darkMode ? "border-slate-700" : "border-slate-200"}`} />
+                    <hr
+                      className={`my-8 ${darkMode ? "border-slate-700" : "border-slate-200"}`}
+                    />
                   </motion.div>
                 )}
 
@@ -1881,7 +2057,9 @@ export default function AdminDashboard() {
                       onSubmit={handleProjectSubmit}
                       className={`p-10 rounded-[3rem] border shadow-sm sticky top-28 max-h-[85vh] overflow-y-auto ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}
                     >
-                      <h2 className={`font-black uppercase text-sm mb-8 tracking-widest ${darkMode ? "text-blue-600" : "text-blue-900"}`}>
+                      <h2
+                        className={`font-black uppercase text-sm mb-8 tracking-widest ${darkMode ? "text-blue-600" : "text-blue-900"}`}
+                      >
                         Register New Client
                       </h2>
                       <div className="space-y-4">
@@ -1953,12 +2131,17 @@ export default function AdminDashboard() {
                               ))}
                           </optgroup>
                           <optgroup label="5. CUSTOM OPTIONS">
-                            <option value="CUSTOM_PROJECT">★ Buat Proyek Custom</option>
+                            <option value="CUSTOM_PROJECT">
+                              ★ Buat Proyek Custom
+                            </option>
                           </optgroup>
                         </select>
 
-                        {projectData.project_title === "Custom Project Development" && (
-                          <div className={`border rounded-2xl p-4 space-y-3 ${darkMode ? "border-slate-600 bg-slate-700/30" : "border-slate-200 bg-slate-50/30"}`}>
+                        {projectData.project_title ===
+                          "Custom Project Development" && (
+                          <div
+                            className={`border rounded-2xl p-4 space-y-3 ${darkMode ? "border-slate-600 bg-slate-700/30" : "border-slate-200 bg-slate-50/30"}`}
+                          >
                             <p className="text-[9px] font-black uppercase text-purple-600 tracking-wider">
                               Custom Features Selection
                             </p>
@@ -2148,7 +2331,9 @@ export default function AdminDashboard() {
 
                   <div className="lg:col-span-8 space-y-6">
                     {/* Filter & Search Bar */}
-                    <div className={`flex flex-wrap gap-4 items-center p-4 rounded-2xl ${darkMode ? "bg-slate-800" : "bg-white"} border ${darkMode ? "border-slate-700" : "border-slate-200"} shadow-sm`}>
+                    <div
+                      className={`flex flex-wrap gap-4 items-center p-4 rounded-2xl ${darkMode ? "bg-slate-800" : "bg-white"} border ${darkMode ? "border-slate-700" : "border-slate-200"} shadow-sm`}
+                    >
                       <div className="flex-1 min-w-[200px]">
                         <input
                           type="text"
@@ -2181,12 +2366,18 @@ export default function AdminDashboard() {
                     </div>
 
                     {filteredActiveProjects.length === 0 ? (
-                      <div className={`border-2 border-dashed rounded-[3.5rem] p-20 flex flex-col items-center justify-center text-center ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
-                        <h3 className={`font-black uppercase italic tracking-tighter text-xl ${darkMode ? "text-slate-400" : "text-slate-400"}`}>
+                      <div
+                        className={`border-2 border-dashed rounded-[3.5rem] p-20 flex flex-col items-center justify-center text-center ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}
+                      >
+                        <h3
+                          className={`font-black uppercase italic tracking-tighter text-xl ${darkMode ? "text-slate-400" : "text-slate-400"}`}
+                        >
                           Production Line Empty
                         </h3>
                         <p className="text-slate-300 text-sm mt-2 font-medium">
-                          {searchTerm || categoryFilter !== "all" || statusFilter !== "all"
+                          {searchTerm ||
+                          categoryFilter !== "all" ||
+                          statusFilter !== "all"
                             ? "Tidak ada proyek yang sesuai dengan filter"
                             : "Belum ada proyek aktif saat ini."}
                         </p>
@@ -2222,7 +2413,9 @@ export default function AdminDashboard() {
 
                             <div className="grid lg:grid-cols-2 gap-10">
                               <div>
-                                <h3 className={`font-black uppercase text-lg italic tracking-tighter truncate ${darkMode ? "text-white" : "text-slate-900"}`}>
+                                <h3
+                                  className={`font-black uppercase text-lg italic tracking-tighter truncate ${darkMode ? "text-white" : "text-slate-900"}`}
+                                >
                                   {proj.client_name}
                                 </h3>
                                 <div className="flex flex-wrap gap-3 mb-1 mt-1">
@@ -2261,7 +2454,9 @@ export default function AdminDashboard() {
                                   </div>
                                 )}
 
-                                <div className={`p-6 rounded-[2.5rem] border mb-6 shadow-inner max-h-[450px] overflow-y-auto ${darkMode ? "bg-slate-700 border-slate-600" : "bg-slate-50 border-slate-100"}`}>
+                                <div
+                                  className={`p-6 rounded-[2.5rem] border mb-6 shadow-inner max-h-[450px] overflow-y-auto ${darkMode ? "bg-slate-700 border-slate-600" : "bg-slate-50 border-slate-100"}`}
+                                >
                                   <p className="text-[9px] font-black uppercase text-slate-400 mb-4 tracking-widest">
                                     Feature Verification Checklist
                                   </p>
@@ -2391,10 +2586,14 @@ export default function AdminDashboard() {
                                         >
                                           <div className="p-6 flex items-center justify-between">
                                             <div>
-                                              <h4 className={`font-black uppercase text-sm italic ${darkMode ? "text-blue-400" : "text-blue-900"}`}>
+                                              <h4
+                                                className={`font-black uppercase text-sm italic ${darkMode ? "text-blue-400" : "text-blue-900"}`}
+                                              >
                                                 {proj.client_name}
                                               </h4>
-                                              <p className={`font-bold text-[10px] uppercase ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                                              <p
+                                                className={`font-bold text-[10px] uppercase ${darkMode ? "text-slate-300" : "text-slate-600"}`}
+                                              >
                                                 {proj.project_title}
                                               </p>
                                               {proj.no_hp && (
@@ -2436,7 +2635,10 @@ export default function AdminDashboard() {
 
                                           {expandedArchive === proj.id && (
                                             <motion.div
-                                              initial={{ height: 0, opacity: 0 }}
+                                              initial={{
+                                                height: 0,
+                                                opacity: 0,
+                                              }}
                                               animate={{
                                                 height: "auto",
                                                 opacity: 1,
@@ -2474,7 +2676,9 @@ export default function AdminDashboard() {
                                                     {new Date(
                                                       proj.updated_at ||
                                                         proj.created_at,
-                                                    ).toLocaleDateString("id-ID")}
+                                                    ).toLocaleDateString(
+                                                      "id-ID",
+                                                    )}
                                                   </p>
                                                 </div>
                                                 <div>
@@ -2522,18 +2726,26 @@ export default function AdminDashboard() {
             {activeTab === "testimonials" && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center mb-6 px-2">
-                  <h2 className={`font-black uppercase text-xs tracking-widest ${darkMode ? "text-white" : "text-slate-900"}`}>
+                  <h2
+                    className={`font-black uppercase text-xs tracking-widest ${darkMode ? "text-white" : "text-slate-900"}`}
+                  >
                     Public Testimonials Queue
                   </h2>
-                  <span className={`text-[9px] font-black px-3 py-1 rounded-full ${darkMode ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-500"}`}>
+                  <span
+                    className={`text-[9px] font-black px-3 py-1 rounded-full ${darkMode ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-500"}`}
+                  >
                     Total: {testimonials.length}
                   </span>
                 </div>
-                
+
                 {testimonials.length === 0 ? (
-                  <div className={`text-center py-20 rounded-[3rem] border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
+                  <div
+                    className={`text-center py-20 rounded-[3rem] border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                  >
                     <div className="text-5xl mb-4">📝</div>
-                    <p className={`text-sm font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    <p
+                      className={`text-sm font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                    >
                       Belum ada testimonial yang masuk
                     </p>
                   </div>
@@ -2555,11 +2767,15 @@ export default function AdminDashboard() {
                               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                             </svg>
                           ))}
-                          <span className={`ml-2 text-[9px] font-black ${t.is_approved ? "text-green-600" : "text-yellow-500"}`}>
+                          <span
+                            className={`ml-2 text-[9px] font-black ${t.is_approved ? "text-green-600" : "text-yellow-500"}`}
+                          >
                             {t.is_approved ? "✓ Approved" : "⏳ Pending"}
                           </span>
                         </div>
-                        <h3 className={`font-black uppercase italic text-sm ${darkMode ? "text-white" : "text-slate-900"}`}>
+                        <h3
+                          className={`font-black uppercase italic text-sm ${darkMode ? "text-white" : "text-slate-900"}`}
+                        >
                           {t.name}{" "}
                           <span className="text-blue-900 text-xs ml-2 normal-case opacity-60">
                             / {t.role}
@@ -2569,7 +2785,8 @@ export default function AdminDashboard() {
                           "{t.comment || ""}"
                         </p>
                         <p className="text-[9px] text-slate-400 mt-3">
-                          📅 {new Date(t.created_at).toLocaleDateString("id-ID")}
+                          📅{" "}
+                          {new Date(t.created_at).toLocaleDateString("id-ID")}
                         </p>
                       </div>
                       <div className="flex gap-3">
@@ -2609,8 +2826,18 @@ export default function AdminDashboard() {
                       onClick={exportToExcel}
                       className="px-5 py-3 bg-green-600 text-white rounded-xl font-black text-[10px] uppercase tracking-wider hover:bg-green-700 transition-all shadow-md flex items-center gap-2"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
                       </svg>
                       Export Excel
                     </button>
@@ -2618,8 +2845,18 @@ export default function AdminDashboard() {
                       onClick={exportToPDF}
                       className="px-5 py-3 bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-wider hover:bg-red-700 transition-all shadow-md flex items-center gap-2"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                        />
                       </svg>
                       Export PDF
                     </button>
@@ -2638,7 +2875,9 @@ export default function AdminDashboard() {
                       Dari {completedProjects.length} Proyek Selesai
                     </p>
                   </div>
-                  <div className={`rounded-[2.5rem] p-8 border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
+                  <div
+                    className={`rounded-[2.5rem] p-8 border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                  >
                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">
                       Breakdown per Kategori
                     </p>
@@ -2650,7 +2889,9 @@ export default function AdminDashboard() {
                               key={cat}
                               className="flex justify-between items-center"
                             >
-                              <span className={`text-[11px] font-bold ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                              <span
+                                className={`text-[11px] font-bold ${darkMode ? "text-slate-300" : "text-slate-600"}`}
+                              >
                                 {cat}
                               </span>
                               <span className="text-[11px] font-black text-blue-900">
@@ -2661,13 +2902,17 @@ export default function AdminDashboard() {
                       )}
                     </div>
                   </div>
-                  <div className={`rounded-[2.5rem] p-8 border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
+                  <div
+                    className={`rounded-[2.5rem] p-8 border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                  >
                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">
                       Statistik
                     </p>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className={`text-[11px] font-bold ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                        <span
+                          className={`text-[11px] font-bold ${darkMode ? "text-slate-300" : "text-slate-600"}`}
+                        >
                           Rata-rata per Proyek
                         </span>
                         <span className="text-[11px] font-black text-blue-900">
@@ -2680,7 +2925,9 @@ export default function AdminDashboard() {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className={`text-[11px] font-bold ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                        <span
+                          className={`text-[11px] font-bold ${darkMode ? "text-slate-300" : "text-slate-600"}`}
+                        >
                           Proyek Tertinggi
                         </span>
                         <span className="text-[11px] font-black text-green-600">
@@ -2697,19 +2944,29 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className={`rounded-[2.5rem] p-8 border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
+                <div
+                  className={`rounded-[2.5rem] p-8 border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                >
                   <RevenueChart />
                 </div>
 
-                <div className={`rounded-[2.5rem] border shadow-sm overflow-hidden ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
-                  <div className={`px-8 py-6 border-b ${darkMode ? "border-slate-700" : "border-slate-100"}`}>
-                    <h3 className={`font-black uppercase text-sm tracking-widest ${darkMode ? "text-white" : "text-slate-900"}`}>
+                <div
+                  className={`rounded-[2.5rem] border shadow-sm overflow-hidden ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                >
+                  <div
+                    className={`px-8 py-6 border-b ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+                  >
+                    <h3
+                      className={`font-black uppercase text-sm tracking-widest ${darkMode ? "text-white" : "text-slate-900"}`}
+                    >
                       Daftar Transaksi
                     </h3>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className={darkMode ? "bg-slate-700" : "bg-slate-50"}>
+                      <thead
+                        className={darkMode ? "bg-slate-700" : "bg-slate-50"}
+                      >
                         <tr>
                           <th className="text-left p-5 text-[9px] font-black text-slate-400 uppercase tracking-wider">
                             Client
@@ -2735,7 +2992,9 @@ export default function AdminDashboard() {
                             className={`hover:bg-slate-50/50 transition-all ${darkMode ? "hover:bg-slate-700" : ""}`}
                           >
                             <td className="p-5">
-                              <p className={`font-black text-sm ${darkMode ? "text-white" : "text-slate-800"}`}>
+                              <p
+                                className={`font-black text-sm ${darkMode ? "text-white" : "text-slate-800"}`}
+                              >
                                 {proj.client_name}
                               </p>
                               {proj.no_hp && (
@@ -2745,7 +3004,9 @@ export default function AdminDashboard() {
                               )}
                             </td>
                             <td className="p-5">
-                              <p className={`font-bold text-[11px] ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                              <p
+                                className={`font-bold text-[11px] ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                              >
                                 {proj.project_title}
                               </p>
                             </td>
@@ -2815,8 +3076,18 @@ export default function AdminDashboard() {
                       {analyticsLoading ? (
                         <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
                       ) : (
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          />
                         </svg>
                       )}
                       Refresh
@@ -2825,8 +3096,18 @@ export default function AdminDashboard() {
                       onClick={handleResetAnalytics}
                       className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-red-700 transition-all flex items-center gap-2"
                     >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
                       </svg>
                       Reset Data
                     </button>
@@ -2840,44 +3121,89 @@ export default function AdminDashboard() {
                 ) : (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className={`rounded-2xl p-6 text-center shadow-sm ${darkMode ? "bg-slate-800" : "bg-white"} border ${darkMode ? "border-slate-700" : "border-slate-100"}`}>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Total Pengunjung (Unique)</p>
-                        <p className="text-3xl font-black text-blue-900 mt-2">{analyticsData.totalUniqueVisitors.toLocaleString()}</p>
-                        <p className="text-[8px] text-slate-400 mt-1">{analyticsData.totalPageViews.toLocaleString()} page views</p>
+                      <div
+                        className={`rounded-2xl p-6 text-center shadow-sm ${darkMode ? "bg-slate-800" : "bg-white"} border ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+                      >
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                          Total Pengunjung (Unique)
+                        </p>
+                        <p className="text-3xl font-black text-blue-900 mt-2">
+                          {analyticsData.totalUniqueVisitors.toLocaleString()}
+                        </p>
+                        <p className="text-[8px] text-slate-400 mt-1">
+                          {analyticsData.totalPageViews.toLocaleString()} page
+                          views
+                        </p>
                       </div>
-                      <div className={`rounded-2xl p-6 text-center shadow-sm ${darkMode ? "bg-slate-800" : "bg-white"} border ${darkMode ? "border-slate-700" : "border-slate-100"}`}>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Total Pembeli (Unique)</p>
-                        <p className="text-3xl font-black text-green-600 mt-2">{analyticsData.totalBuyers.toLocaleString()}</p>
-                        <p className="text-[8px] text-slate-400 mt-1">Dari tabel projects</p>
+                      <div
+                        className={`rounded-2xl p-6 text-center shadow-sm ${darkMode ? "bg-slate-800" : "bg-white"} border ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+                      >
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                          Total Pembeli (Unique)
+                        </p>
+                        <p className="text-3xl font-black text-green-600 mt-2">
+                          {analyticsData.totalBuyers.toLocaleString()}
+                        </p>
+                        <p className="text-[8px] text-slate-400 mt-1">
+                          Dari tabel projects
+                        </p>
                       </div>
-                      <div className={`rounded-2xl p-6 text-center shadow-sm ${darkMode ? "bg-slate-800" : "bg-white"} border ${darkMode ? "border-slate-700" : "border-slate-100"}`}>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Hari Ini (Pengunjung)</p>
-                        <p className="text-3xl font-black text-blue-900 mt-2">{analyticsData.todayUniqueVisitors}</p>
-                        <p className="text-[8px] text-slate-400 mt-1">{analyticsData.todayVisitors} page views</p>
+                      <div
+                        className={`rounded-2xl p-6 text-center shadow-sm ${darkMode ? "bg-slate-800" : "bg-white"} border ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+                      >
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                          Hari Ini (Pengunjung)
+                        </p>
+                        <p className="text-3xl font-black text-blue-900 mt-2">
+                          {analyticsData.todayUniqueVisitors}
+                        </p>
+                        <p className="text-[8px] text-slate-400 mt-1">
+                          {analyticsData.todayVisitors} page views
+                        </p>
                       </div>
-                      <div className={`rounded-2xl p-6 text-center shadow-sm ${darkMode ? "bg-slate-800" : "bg-white"} border ${darkMode ? "border-slate-700" : "border-slate-100"}`}>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Hari Ini (Pembeli)</p>
-                        <p className="text-3xl font-black text-green-600 mt-2">{analyticsData.todayBuyers}</p>
-                        <p className="text-[8px] text-slate-400 mt-1">Order masuk hari ini</p>
+                      <div
+                        className={`rounded-2xl p-6 text-center shadow-sm ${darkMode ? "bg-slate-800" : "bg-white"} border ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+                      >
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                          Hari Ini (Pembeli)
+                        </p>
+                        <p className="text-3xl font-black text-green-600 mt-2">
+                          {analyticsData.todayBuyers}
+                        </p>
+                        <p className="text-[8px] text-slate-400 mt-1">
+                          Order masuk hari ini
+                        </p>
                       </div>
                     </div>
 
-                    <div className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Grafik Pengunjung vs Pembeli (7 Hari Terakhir)</p>
+                    <div
+                      className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                    >
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                        Grafik Pengunjung vs Pembeli (7 Hari Terakhir)
+                      </p>
                       <div className="h-80">
                         <CombinedChart />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Perangkat Pengunjung</p>
+                      <div
+                        className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                      >
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                          Perangkat Pengunjung
+                        </p>
                         <div className="h-56">
                           <DeviceChart />
                         </div>
                       </div>
-                      <div className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Sumber Traffic</p>
+                      <div
+                        className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                      >
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                          Sumber Traffic
+                        </p>
                         <div className="h-56">
                           <TrafficChart />
                         </div>
@@ -2885,61 +3211,105 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* DETAIL PERANGKAT (HP, Browser, OS) */}
-                    <div className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
+                    <div
+                      className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                    >
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                         📱 Detail Perangkat Pengunjung (Top 20)
                       </p>
                       {analyticsData.deviceDetails.length === 0 ? (
-                        <p className="text-center text-slate-400 text-sm py-8">Belum ada data perangkat</p>
+                        <p className="text-center text-slate-400 text-sm py-8">
+                          Belum ada data perangkat
+                        </p>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-[11px]">
-                            <thead className={darkMode ? "bg-slate-700" : "bg-slate-50"}>
+                            <thead
+                              className={
+                                darkMode ? "bg-slate-700" : "bg-slate-50"
+                              }
+                            >
                               <tr>
-                                <th className="text-left p-3 font-black">Perangkat</th>
-                                <th className="text-left p-3 font-black">Model</th>
-                                <th className="text-left p-3 font-black">Browser</th>
+                                <th className="text-left p-3 font-black">
+                                  Perangkat
+                                </th>
+                                <th className="text-left p-3 font-black">
+                                  Model
+                                </th>
+                                <th className="text-left p-3 font-black">
+                                  Browser
+                                </th>
                                 <th className="text-left p-3 font-black">OS</th>
-                                <th className="text-right p-3 font-black">Pengunjung</th>
+                                <th className="text-right p-3 font-black">
+                                  Pengunjung
+                                </th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                              {analyticsData.deviceDetails.map((device, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50/50 transition-all">
-                                  <td className="p-3 font-medium">{device.brand}</td>
-                                  <td className="p-3 text-slate-500">{device.model}</td>
-                                  <td className="p-3">
-                                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-[9px] font-black">
-                                      {device.browser}
-                                    </span>
-                                  </td>
-                                  <td className="p-3 text-slate-500">{device.os} {device.osVersion}</td>
-                                  <td className="p-3 text-right font-black text-blue-900">{device.count}</td>
-                                </tr>
-                              ))}
+                              {analyticsData.deviceDetails.map(
+                                (device, idx) => (
+                                  <tr
+                                    key={idx}
+                                    className="hover:bg-slate-50/50 transition-all"
+                                  >
+                                    <td className="p-3 font-medium">
+                                      {device.brand}
+                                    </td>
+                                    <td className="p-3 text-slate-500">
+                                      {device.model}
+                                    </td>
+                                    <td className="p-3">
+                                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-[9px] font-black">
+                                        {device.browser}
+                                      </span>
+                                    </td>
+                                    <td className="p-3 text-slate-500">
+                                      {device.os} {device.osVersion}
+                                    </td>
+                                    <td className="p-3 text-right font-black text-blue-900">
+                                      {device.count}
+                                    </td>
+                                  </tr>
+                                ),
+                              )}
                             </tbody>
                           </table>
                         </div>
                       )}
                     </div>
 
-                    <div className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Halaman Populer</p>
+                    <div
+                      className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                    >
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                        Halaman Populer
+                      </p>
                       {analyticsData.topPages.length === 0 ? (
-                        <p className="text-center text-slate-400 text-sm py-8">Belum ada data halaman</p>
+                        <p className="text-center text-slate-400 text-sm py-8">
+                          Belum ada data halaman
+                        </p>
                       ) : (
                         <div className="space-y-3">
                           {analyticsData.topPages.map((page, idx) => (
-                            <div key={idx} className="flex justify-between items-center">
-                              <span className="text-[11px] font-mono text-slate-600">{page.page === '/' ? 'Home' : page.page}</span>
+                            <div
+                              key={idx}
+                              className="flex justify-between items-center"
+                            >
+                              <span className="text-[11px] font-mono text-slate-600">
+                                {page.page === "/" ? "Home" : page.page}
+                              </span>
                               <div className="flex items-center gap-3">
                                 <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-blue-900 rounded-full" 
-                                    style={{ width: `${(page.views / analyticsData.topPages[0].views) * 100}%` }}
+                                  <div
+                                    className="h-full bg-blue-900 rounded-full"
+                                    style={{
+                                      width: `${(page.views / analyticsData.topPages[0].views) * 100}%`,
+                                    }}
                                   />
                                 </div>
-                                <span className="text-[10px] font-black text-blue-900 w-16 text-right">{page.views} views</span>
+                                <span className="text-[10px] font-black text-blue-900 w-16 text-right">
+                                  {page.views} views
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -2965,8 +3335,12 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className={`rounded-2xl p-8 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
-                  <h3 className="font-black text-lg uppercase tracking-tighter mb-6">Manual Backup</h3>
+                <div
+                  className={`rounded-2xl p-8 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                >
+                  <h3 className="font-black text-lg uppercase tracking-tighter mb-6">
+                    Manual Backup
+                  </h3>
                   <div className="flex flex-wrap gap-6 items-center">
                     <button
                       onClick={handleBackup}
@@ -2976,20 +3350,35 @@ export default function AdminDashboard() {
                       {backupLoading ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
                       ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
                         </svg>
                       )}
                       Backup Sekarang
                     </button>
                     <p className="text-[10px] text-slate-400 italic">
-                      Klik tombol untuk mendownload file backup (JSON) dari semua data (Portfolio, Projects, Testimonials)
+                      Klik tombol untuk mendownload file backup (JSON) dari
+                      semua data (Portfolio, Projects, Testimonials)
                     </p>
                   </div>
                 </div>
 
-                <div className={`rounded-2xl p-8 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
-                  <h3 className="font-black text-lg uppercase tracking-tighter mb-6">Restore Data</h3>
+                <div
+                  className={`rounded-2xl p-8 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                >
+                  <h3 className="font-black text-lg uppercase tracking-tighter mb-6">
+                    Restore Data
+                  </h3>
                   <div className="flex flex-wrap gap-6 items-center">
                     <label className="cursor-pointer">
                       <input
@@ -2999,8 +3388,18 @@ export default function AdminDashboard() {
                         className="hidden"
                       />
                       <div className="px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-black text-[10px] uppercase tracking-wider hover:bg-slate-200 transition-all cursor-pointer flex items-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                          />
                         </svg>
                         Pilih File Backup
                       </div>
@@ -3023,24 +3422,156 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Riwayat Backup</p>
+                <div
+                  className={`rounded-2xl p-6 shadow-sm border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                >
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                    Riwayat Backup
+                  </p>
                   {backupHistory.length === 0 ? (
-                    <p className="text-center text-slate-400 text-sm py-8">Belum ada riwayat backup</p>
+                    <p className="text-center text-slate-400 text-sm py-8">
+                      Belum ada riwayat backup
+                    </p>
                   ) : (
                     <div className="space-y-2">
                       {backupHistory.map((backup) => (
-                        <div key={backup.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                        <div
+                          key={backup.id}
+                          className="flex justify-between items-center p-3 bg-slate-50 rounded-xl"
+                        >
                           <div>
-                            <p className="text-[11px] font-bold text-slate-700">{backup.filename}</p>
-                            <p className="text-[9px] text-slate-400">{new Date(backup.date).toLocaleString("id-ID")}</p>
+                            <p className="text-[11px] font-bold text-slate-700">
+                              {backup.filename}
+                            </p>
+                            <p className="text-[9px] text-slate-400">
+                              {new Date(backup.date).toLocaleString("id-ID")}
+                            </p>
                           </div>
-                          <span className="text-[9px] text-slate-500">{Math.round(backup.size / 1024)} KB</span>
+                          <span className="text-[9px] text-slate-500">
+                            {Math.round(backup.size / 1024)} KB
+                          </span>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* TAB 7: MENUNGGU KONFIRMASI */}
+            {activeTab === "waiting" && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div className="bg-yellow-600 px-6 py-4 rounded-2xl shadow-lg">
+                    <h2 className="text-white font-black text-sm uppercase tracking-widest">
+                      ⏳ Menunggu Konfirmasi Pembayaran
+                    </h2>
+                    <p className="text-yellow-100 text-[8px] font-bold uppercase tracking-wider mt-1">
+                      Customer sudah upload bukti, menunggu verifikasi admin
+                    </p>
+                  </div>
+                  <button
+                    onClick={fetchWaitingPayments}
+                    disabled={waitingLoading}
+                    className="px-4 py-2 bg-blue-900 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-blue-800 transition-all disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {waitingLoading ? (
+                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
+                    ) : (
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                    )}
+                    Refresh
+                  </button>
+                </div>
+
+                {waitingLoading ? (
+                  <div className="flex justify-center py-20">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-900" />
+                  </div>
+                ) : waitingPayments.length === 0 ? (
+                  <div
+                    className={`text-center py-20 rounded-[3rem] border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                  >
+                    <div className="text-5xl mb-4">✅</div>
+                    <p
+                      className={`text-sm font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                    >
+                      Tidak ada pembayaran yang menunggu konfirmasi
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {waitingPayments.map((proj) => (
+                      <div
+                        key={proj.id}
+                        className={`p-6 rounded-[2rem] border shadow-sm ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                      >
+                        <div className="flex flex-wrap justify-between items-start gap-4">
+                          <div>
+                            <h3
+                              className={`font-black text-lg uppercase tracking-tighter ${darkMode ? "text-white" : "text-slate-900"}`}
+                            >
+                              {proj.client_name}
+                            </h3>
+                            <p className="text-blue-600 font-bold text-[10px] uppercase tracking-widest">
+                              {proj.project_title} • {proj.website_category}
+                            </p>
+                            <div className="flex flex-wrap gap-3 mt-2">
+                              <span className="text-[10px] font-black text-slate-600 flex items-center gap-1.5">
+                                📱 {proj.no_hp || "-"}
+                              </span>
+                              <span className="text-[10px] font-black text-blue-900 flex items-center gap-1.5">
+                                💰 Rp {Number(proj.price || 0).toLocaleString()}
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
+                                🕐{" "}
+                                {new Date(proj.created_at).toLocaleString(
+                                  "id-ID",
+                                  { dateStyle: "medium", timeStyle: "short" },
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() =>
+                                confirmPayment(proj.id, proj.payments?.[0]?.id)
+                              }
+                              className="px-6 py-2 bg-green-600 text-white rounded-xl font-black text-[10px] uppercase tracking-wider hover:bg-green-700 transition-all"
+                            >
+                              ✓ Konfirmasi
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (proj.payments?.[0]?.payment_proof_url) {
+                                  window.open(
+                                    proj.payments[0].payment_proof_url,
+                                    "_blank",
+                                  );
+                                }
+                              }}
+                              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-black text-[10px] uppercase tracking-wider hover:bg-slate-200 transition-all"
+                            >
+                              📷 Lihat Bukti
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </motion.div>
